@@ -1,0 +1,35 @@
+## Interface: 30300
+## Title: Rein Ability Tracker
+## Notes: RAT - see what your rats do
+## Author: scorpzor
+## Version: 0.1.0
+## SavedVariables: ReinAbilityTrackerDB
+## OptionalDeps: Ace3, ElvUI
+## X-Category: Party
+
+# Libraries
+embeds.xml
+
+# Localization
+Locales\enUS.lua
+
+# Core Systems
+Core\Init.lua
+Core\Config.lua
+Core\Options.lua
+
+# Data
+Data\Spells.lua
+
+# Modules
+Modules\Units.lua
+Modules\Comm.lua
+Modules\Inspection.lua
+Modules\Spells.lua
+Modules\Tracker.lua
+Modules\IconHelpers.lua
+Modules\Anchors.lua
+Modules\PartySpells.lua
+Modules\ExtraSpells.lua
+Modules\InterruptBars.lua
+Modules\Icons.lua
