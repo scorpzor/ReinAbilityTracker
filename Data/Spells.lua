@@ -70,7 +70,6 @@ RAT.Data.Spells = {
 
         -- Defensive
         { id = 45438, cd = 300, type = "defensive" },       -- Ice Block
-        { id = 1953,  cd = 15,  type = "defensive" },       -- Blink
 
         -- Offensive
         { id = 11958, cd = 384, type = "offensive", spec = true }, -- Cold Snap
@@ -90,9 +89,8 @@ RAT.Data.Spells = {
         -- Defensive
         { id = 642,   cd = 300, type = "defensive" },       -- Divine Shield
         { id = 1044,  cd = 25,  type = "defensive" },       -- Hand of Freedom
-        { id = 54428, cd = 60,  type = "defensive" },       -- Divine Plea
         { id = 6940,  cd = 120, type = "defensive" },       -- Hand of Sacrifice
-        { id = 1110278, cd = 180, type = "external" },       -- Hand of Protection
+        { id = 1110278, cd = 180, type = "external" },      -- Hand of Protection
 
         -- Raid Defensive
         { id = 31821, cd = 120, type = "external", spec = true }, -- Aura Mastery
@@ -100,8 +98,6 @@ RAT.Data.Spells = {
 
         -- Offensive
         { id = 31884, cd = 120, type = "offensive" },       -- Avenging Wrath
-        { id = 48825, cd = 5,   type = "offensive", spec = true }, -- Holy Shock
-        { id = 48827, cd = 30,  type = "offensive", spec = true }, -- Avenger's Shield
     },
 
     ["PRIEST"] = {
@@ -113,6 +109,8 @@ RAT.Data.Spells = {
         --{ id = 47585, cd = 75,  type = "defensive", spec = true },          -- Dispersion
         { id = 1106346, cd = 180, type = "defensive" },                     -- Fear Ward
         { id = 1100586, cd = 30,  type = "defensive" },                     -- Fade
+        { id = 1164901,  cd = 360, type = "defensive", spec = true },       -- Hymn of Hope
+        { id = 1164843,  cd = 480, type = "defensive", spec = true },       -- Divine Hymn
 
         -- Offensive
         { id = 1134433, cd = 300, type = "offensive" },                     -- Shadowfiend
@@ -120,8 +118,6 @@ RAT.Data.Spells = {
 
         -- External
         { id = 1147788,  cd = 180, type = "external", spec = true },        -- Guardian Spirit
-        { id = 1164901,  cd = 360, type = "external", spec = true },        -- Hymn of Hope
-        { id = 1164843,  cd = 480, type = "external", spec = true },        -- Divine Hymn
         { id = 1133206,  cd = 180, type = "external", spec = true },        -- Pain Suppression
     },
 
@@ -162,7 +158,6 @@ RAT.Data.Spells = {
         { id = 51490, cd = 35,  type = "offensive", spec = true }, -- Thunderstorm
         { id = 30823, cd = 60,  type = "offensive", spec = true }, -- Shamanistic Rage
         { id = 16166, cd = 180, type = "offensive", spec = true }, -- Elemental Mastery
-        { id = 60043, cd = 8,   type = "offensive" },       -- Lava Burst
 
         -- Other
         { id = 16190, cd = 300, type = "other", spec = true }, -- Mana Tide Totem
@@ -216,7 +211,7 @@ RAT.Data.Racials = {
         { id = 7744,  cd = 120, type = "defensive" },       -- Will of the Forsaken
     },
     ["BloodElf"] = {
-        { id = 28730, cd = 120, type = "offensive" },       -- Arcane Torrent
+        { id = 28730, cd = 120, type = "interrupt" },       -- Arcane Torrent
     },
     ["Tauren"] = {
         { id = 20549, cd = 120, type = "cc" },              -- War Stomp
