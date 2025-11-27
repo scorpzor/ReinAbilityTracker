@@ -253,8 +253,27 @@ function IconHelpers:SetSpellTexture(iconOrBar, spellName, spellData)
         end
     end
 
+    if spellData and spellData.category == "mystic_enchant" and spellData.enchantID then
+        spellIcon = GetSpellTexture(spellData.enchantID)
+        if not spellIcon then
+            local _, _, icon = GetSpellInfo(spellData.enchantID)
+            spellIcon = icon
+        end
+
+        if spellIcon then
+            RAT:DebugPrint(string.format("Using enchant ID icon for mystic enchant '%s' (enchantID=%d)", spellName, spellData.enchantID))
+            texture:SetTexture(spellIcon)
+            return true
+        end
+    end
+
     -- Fallback: question mark
-    RAT:DebugPrint(string.format("Using question mark icon for spell '%s' (id=%s)", spellName, tostring(spellData and spellData.id)))
+    if spellData then
+        RAT:DebugPrint(string.format("Using question mark icon for spell '%s' (id=%s, category=%s, enchantID=%s)",
+            spellName, tostring(spellData.id), tostring(spellData.category), tostring(spellData.enchantID)))
+    else
+        RAT:DebugPrint(string.format("Using question mark icon for spell '%s' (spellData=nil)", spellName))
+    end
     texture:SetTexture("Interface\\Icons\\INV_Misc_QuestionMark")
     return false
 end

@@ -853,6 +853,64 @@ local function GetOptions()
                 order = i,
             }
         end
+
+        order = order + 1
+    end
+
+    if spellData.mysticEnchants then
+        for _, className in ipairs({"WARRIOR", "PALADIN", "HUNTER", "ROGUE", "PRIEST", "DEATHKNIGHT", "SHAMAN", "MAGE", "WARLOCK", "DRUID"}) do
+            local enchants = spellData.mysticEnchants[className]
+            if enchants and #enchants > 0 then
+                local classColor = RAID_CLASS_COLORS[className]
+                local colorCode = ""
+                if classColor then
+                    colorCode = string.format("|cff%02x%02x%02x", classColor.r * 255, classColor.g * 255, classColor.b * 255)
+                end
+
+                options.args.spellFilters.args.spellList.args["mystic_" .. className] = {
+                    name = colorCode .. className .. " Mystic Enchants|r",
+                    type = "group",
+                    inline = true,
+                    order = order,
+                    args = {},
+                    get = function(info)
+                        local spellName = info[#info]
+                        local group = RAT.db.profile.spellFilterSelectedGroup or "party"
+
+                        if not RAT.db.profile.spellGroupFilters[group] then
+                            return true
+                        end
+
+                        local enabled = RAT.db.profile.spellGroupFilters[group][spellName]
+                        return enabled == nil and true or enabled
+                    end,
+                    set = function(info, value)
+                        local spellName = info[#info]
+                        local group = RAT.db.profile.spellFilterSelectedGroup or "party"
+
+                        if not RAT.db.profile.spellGroupFilters[group] then
+                            RAT.db.profile.spellGroupFilters[group] = {}
+                        end
+
+                        RAT.db.profile.spellGroupFilters[group][spellName] = value
+
+                        if RAT.Icons then
+                            RAT.Icons:RefreshAllDisplays()
+                        end
+                    end,
+                }
+
+                for i, spellName in ipairs(enchants) do
+                    options.args.spellFilters.args.spellList.args["mystic_" .. className].args[spellName] = {
+                        name = spellName,
+                        type = "toggle",
+                        order = i,
+                    }
+                end
+
+                order = order + 1
+            end
+        end
     end
 
     return options

@@ -130,6 +130,16 @@ function Inspection:ProcessAscensionInspection()
     end
     RAT.State.inspectedTalents[guid] = talentSpells
 
+    local playerGUID = UnitGUID("player")
+    if guid == playerGUID then
+        local mysticEnchants = self:GetMysticEnchants("player")
+        if not RAT.State.inspectedMysticEnchants then
+            RAT.State.inspectedMysticEnchants = {}
+        end
+        RAT.State.inspectedMysticEnchants[guid] = mysticEnchants
+        RAT:DebugPrint(string.format("Stored %d mystic enchants for player", #mysticEnchants))
+    end
+
     if RAT.Spells and RAT.Spells.UpdateAllUnitSpells then
         RAT.Spells:UpdateAllUnitSpells()
     end
@@ -291,13 +301,78 @@ function Inspection:GUIDHasTalent(guid, spellName)
     return false
 end
 
---- Get mystic enchants for a unit
--- @param unit string Unit ID
--- @return table Array of mystic enchant spell data: {spellID, spellName, cooldown}
+--- Get mystic enchants from active preset for given unit
+-- @param unit string Unit token
+-- @return table Array of mystic enchant data: {{spellID, spellName, cooldown, type, enchantID}, ...}
 function Inspection:GetMysticEnchants(unit)
     local mysticEnchants = {}
 
-    -- TODO: Implement mystic enchant detection
+    if not UnitIsUnit(unit, "player") then
+        return mysticEnchants
+    end
+
+    local _, playerClass = UnitClass("player")
+    if not playerClass then
+        RAT:DebugPrint("GetMysticEnchants: Could not determine player class")
+        return mysticEnchants
+    end
+
+    local numPresets = C_MysticEnchantPreset.GetNumPresets()
+    if not numPresets or numPresets == 0 then
+        RAT:DebugPrint("GetMysticEnchants: No presets found")
+        return mysticEnchants
+    end
+
+    local activePresetIndex = nil
+    for i = 1, numPresets do
+        local presetData, isActive = C_MysticEnchantPreset.GetPresetData(i)
+        if isActive then
+            activePresetIndex = i
+            break
+        end
+    end
+
+    if not activePresetIndex then
+        RAT:DebugPrint("GetMysticEnchants: No active preset")
+        return mysticEnchants
+    end
+
+    local presetData, isActive = C_MysticEnchantPreset.GetPresetData(activePresetIndex)
+    if not presetData then
+        RAT:DebugPrint("GetMysticEnchants: Failed to get preset data")
+        return mysticEnchants
+    end
+
+    local allMappings = RAT.Data.MysticEnchantMapping or {}
+    local classMappings = allMappings[playerClass] or {}
+    local foundCount = 0
+
+    for slotIndex, enchantID in pairs(presetData) do
+        if enchantID ~= 0 then
+            local mappingData = classMappings[enchantID]
+
+            if mappingData then
+                local spellID, cooldown, spellType = unpack(mappingData)
+
+                local spellName = GetSpellInfo(spellID)
+                if spellName then
+                    table.insert(mysticEnchants, {spellID, spellName, cooldown, spellType, enchantID})
+                    foundCount = foundCount + 1
+                    RAT:DebugPrint(string.format("  Found enchant: %s (enchantID=%d, spellID=%d, cd=%ds, type=%s)",
+                        spellName, enchantID, spellID, cooldown, spellType))
+                else
+                    RAT:DebugPrint(string.format("  Warning: Spell ID %d not found for enchant ID %d",
+                        spellID, enchantID))
+                end
+            else
+                RAT:DebugPrint(string.format("  Unknown %s enchant ID %d in slot %d (add to MysticEnchantMapping[\"%s\"])",
+                    playerClass, enchantID, slotIndex, playerClass))
+            end
+        end
+    end
+
+    RAT:DebugPrint(string.format("GetMysticEnchants: Found %d/%d %s enchants with cooldowns",
+        foundCount, #presetData, playerClass))
 
     return mysticEnchants
 end

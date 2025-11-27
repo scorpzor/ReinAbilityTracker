@@ -64,6 +64,8 @@ function Spells:CollectSpellsForGUID(guid, unitData)
         cc = {},
         interrupt = {},
         external = {},
+        defensive = {},
+        offensive = {},
         trinket = {},
     }
 
@@ -155,11 +157,44 @@ function Spells:CollectSpellsForGUID(guid, unitData)
         end
     end
 
+    if RAT.State.inspectedMysticEnchants and RAT.State.inspectedMysticEnchants[guid] then
+        local mysticEnchants = RAT.State.inspectedMysticEnchants[guid]
+        for _, enchantData in ipairs(mysticEnchants) do
+            local spellID, spellName, cooldown, spellType, enchantID = unpack(enchantData)
+
+            if spellName and cooldown and cooldown > 0 and spellType then
+                local spellInfo = {
+                    name = spellName,
+                    cd = cooldown,
+                    spellData = {
+                        id = spellID,
+                        cd = cooldown,
+                        type = spellType,
+                        category = "mystic_enchant",
+                        enchantID = enchantID,
+                    },
+                    guid = guid,
+                    unit = unitData.unit,
+                    class = class,
+                }
+
+                table.insert(allSpells, spellInfo)
+
+                if spellsByType[spellType] then
+                    table.insert(spellsByType[spellType], spellInfo)
+                end
+            end
+        end
+    end
+
     return {
         all = allSpells,
         cc = spellsByType.cc,
         interrupt = spellsByType.interrupt,
         external = spellsByType.external,
+        defensive = spellsByType.defensive,
+        offensive = spellsByType.offensive,
+        trinket = spellsByType.trinket,
     }
 end
 
@@ -254,7 +289,8 @@ function Spells:GetAllSpellsForGroup(groupType)
     local result = {
         classes = {},
         races = {},
-        trinkets = {}
+        trinkets = {},
+        mysticEnchants = {}
     }
 
     if not RAT.Data then
@@ -295,6 +331,24 @@ function Spells:GetAllSpellsForGroup(groupType)
             end
             if #result.trinkets > 0 then
                 table.sort(result.trinkets)
+            end
+        end
+
+        if RAT.Data.MysticEnchantMapping then
+            for className, enchants in pairs(RAT.Data.MysticEnchantMapping) do
+                for enchantID, enchantData in pairs(enchants) do
+                    local spellID, cooldown, spellType = unpack(enchantData)
+                    local spellName = GetSpellInfo(spellID)
+                    if spellName then
+                        if not result.mysticEnchants[className] then
+                            result.mysticEnchants[className] = {}
+                        end
+                        table.insert(result.mysticEnchants[className], spellName)
+                    end
+                end
+                if result.mysticEnchants[className] and #result.mysticEnchants[className] > 0 then
+                    table.sort(result.mysticEnchants[className])
+                end
             end
         end
     else
@@ -345,6 +399,26 @@ function Spells:GetAllSpellsForGroup(groupType)
             end
             if #result.trinkets > 0 then
                 table.sort(result.trinkets)
+            end
+        end
+
+        if RAT.Data.MysticEnchantMapping then
+            for className, enchants in pairs(RAT.Data.MysticEnchantMapping) do
+                for enchantID, enchantData in pairs(enchants) do
+                    local spellID, cooldown, spellType = unpack(enchantData)
+                    if spellType == groupType then
+                        local spellName = GetSpellInfo(spellID)
+                        if spellName then
+                            if not result.mysticEnchants[className] then
+                                result.mysticEnchants[className] = {}
+                            end
+                            table.insert(result.mysticEnchants[className], spellName)
+                        end
+                    end
+                end
+                if result.mysticEnchants[className] and #result.mysticEnchants[className] > 0 then
+                    table.sort(result.mysticEnchants[className])
+                end
             end
         end
     end

@@ -24,7 +24,6 @@ RAT.Data.Spells = {
     ["DRUID"] = {
         -- Interrupts
         { id = 1105211, cd = 60,  type = "interrupt", spec = true }, -- Bash
-        { id = 1398202, cd = 60,  type = "interrupt", spec = true }, -- Solar Beam 2304523 1398202
 
         -- CC
         { id = 1150516, cd = 20,  type = "cc", spec = true }, -- Typhoon
@@ -124,10 +123,6 @@ RAT.Data.Spells = {
         { id = 1164901,  cd = 360, type = "external", spec = true },        -- Hymn of Hope
         { id = 1164843,  cd = 480, type = "external", spec = true },        -- Divine Hymn
         { id = 1133206,  cd = 180, type = "external", spec = true },        -- Pain Suppression
-        { id = 2304522,  cd = 120, type = "external", spec = true },        -- ME: Void Shift
-        { id = 1180523,  cd = 120, type = "external", spec = true },        -- ME: Power Word: Barrier
-        { id = 2110066,  cd = 30, type = "external", spec = true },         -- ME: Divine Star
-        { id = 2304897,  cd = 45, type = "external", spec = true },         -- ME: Divine Star
     },
 
     ["ROGUE"] = {
@@ -448,6 +443,53 @@ RAT.Data.TrinketSpells = {
     [1414524] = {spellID = 23996, cd = 120},  -- Drakefury Scale
 
     -- Example: [itemID] = {spellID = differentSpellID, cd = customCooldown},
+}
+
+--------------------------------------------------------------------------------
+-- Mystic Enchant ID Mapping
+-- Maps enchant/collection IDs to castable spell IDs
+-- Structure: ["CLASS"] = { [enchantID] = {spellID, cooldown, type} }
+-- Types: interrupt, cc, defensive, offensive, external
+--------------------------------------------------------------------------------
+RAT.Data.MysticEnchantMapping = {
+    ["PALADIN"] = {
+        [1591108] = {1589815, 25, "defensive"},
+    },
+
+    ["WARRIOR"] = {
+
+    },
+
+    ["PRIEST"] = {
+        [1398201] = {2304522, 120, "external"},
+        [1180520] = {1180523, 120, "external"},
+        [1398178] = {2110066, 30, "defensive"},
+        [1398211] = {2304897, 45, "defensive"},
+    },
+
+    ["DRUID"] = {
+        [1398202] = {2304523, 60, "interrupt"},
+    },
+
+    ["HUNTER"] = {
+
+    },
+
+    ["MAGE"] = {
+
+    },
+
+    ["ROGUE"] = {
+
+    },
+
+    ["SHAMAN"] = {
+
+    },
+
+    ["WARLOCK"] = {
+
+    },
 }
 
 --- Get trinket data from item ID

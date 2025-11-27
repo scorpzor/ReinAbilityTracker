@@ -52,6 +52,23 @@ function Tracker:OnAbilityUsed(unit, spellName)
         end
     end
 
+    if not spellData and RAT.State.inspectedMysticEnchants and RAT.State.inspectedMysticEnchants[guid] then
+        local mysticEnchants = RAT.State.inspectedMysticEnchants[guid]
+        for _, enchantData in ipairs(mysticEnchants) do
+            local enchantSpellID, enchantName, enchantCooldown, enchantType, enchantID = unpack(enchantData)
+
+            if spellName == enchantName then
+                spellData = {
+                    cd = enchantCooldown,
+                    type = enchantType or "external",
+                }
+                RAT:DebugPrint(string.format("Detected mystic enchant cast: %s (cd=%ds, type=%s)",
+                    enchantName, enchantCooldown, enchantType or "external"))
+                break
+            end
+        end
+    end
+
     if not spellData then
         return
     end
