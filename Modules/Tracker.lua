@@ -129,11 +129,16 @@ end
 --- Stop a cooldown for a specific ability
 -- @param guid string Player GUID
 -- @param spellName string Name of the spell
-function Tracker:StopCooldown(guid, spellName)
+-- @param reason string Optional reason for stopping (e.g., "expired", "reset")
+function Tracker:StopCooldown(guid, spellName, reason)
     if not RAT.State.activeGUIDs[guid] then return end
 
     RAT.State.activeGUIDs[guid][spellName] = nil
-    RAT:DebugPrint(string.format("Stopped CD: %s", spellName))
+    if reason then
+        RAT:DebugPrint(string.format("Stopped CD: %s (%s)", spellName, reason))
+    else
+        RAT:DebugPrint(string.format("Stopped CD: %s", spellName))
+    end
 end
 
 --- Check if an ability is on cooldown
@@ -154,7 +159,7 @@ function Tracker:IsOnCooldown(guid, spellName)
     local timeRemaining = (cdInfo.startTime + cdInfo.cooldown) - GetTime()
 
     if timeRemaining <= 0 then
-        self:StopCooldown(guid, spellName)
+        self:StopCooldown(guid, spellName, "expired")
         return false, nil
     end
 
@@ -177,7 +182,7 @@ function Tracker:GetCooldownInfo(guid, spellName)
 
     local timeRemaining = (cdInfo.startTime + cdInfo.cooldown) - GetTime()
     if timeRemaining <= 0 then
-        self:StopCooldown(guid, spellName)
+        self:StopCooldown(guid, spellName, "expired")
         return nil
     end
 
@@ -232,7 +237,7 @@ function Tracker:HandleCooldownResetters(guid, spellName)
     for targetSpell, _ in pairs(resetsTable) do
         if RAT.State.activeGUIDs[guid] and RAT.State.activeGUIDs[guid][targetSpell] then
             RAT:DebugPrint(string.format("  Resetting: %s", targetSpell))
-            self:StopCooldown(guid, targetSpell)
+            self:StopCooldown(guid, targetSpell, "reset by " .. spellName)
         end
     end
 end
