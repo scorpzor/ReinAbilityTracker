@@ -84,22 +84,22 @@ RAT.Data.Spells = {
 
     ["PALADIN"] = {
         -- CC
-        { id = 10308, cd = 60,  type = "interrupt" },       -- Hammer of Justice
-        { id = 66008, cd = 60,  type = "cc", spec = true }, -- Repentance
+        { id = 10308, cd = 60,  type = "interrupt" },                  -- Hammer of Justice
+        { id = 66008, cd = 60,  type = "cc", spec = true },            -- Repentance
 
         -- Defensive
-        { id = 1100498, cd = 120, type = "defensive", duration = 12 }, -- Divine Protection
-        { id = 642,   cd = 300, type = "defensive" },       -- Divine Shield
-        { id = 1044,  cd = 25,  type = "defensive" },       -- Hand of Freedom
-        { id = 6940,  cd = 120, type = "defensive" },       -- Hand of Sacrifice
-        { id = 1110278, cd = 180, type = "external" },      -- Hand of Protection
+        { id = 1100498, cd = 180, type = "defensive", duration = 12 }, -- Divine Protection
+        { id = 1100642, cd = 300, type = "defensive" },                -- Divine Shield
+        { id = 1101044, cd = 25, type = "defensive" },                 -- Hand of Freedom
+        { id = 1106940, cd = 120, type = "defensive" },                -- Hand of Sacrifice
+        { id = 1110278, cd = 300, type = "external" },                 -- Hand of Protection
 
         -- Raid Defensive
-        { id = 31821, cd = 120, type = "external", spec = true }, -- Aura Mastery
-        { id = 1164205, cd = 120, type = "external", spec = true }, -- Divine Sacrifice
+        { id = 1131821, cd = 120, type = "external", spec = true },    -- Aura Mastery
+        { id = 1164205, cd = 120, type = "external", spec = true },    -- Divine Sacrifice
 
         -- Offensive
-        { id = 31884, cd = 120, type = "offensive" },       -- Avenging Wrath
+        { id = 31884, cd = 120, type = "offensive" },                  -- Avenging Wrath
     },
 
     ["PRIEST"] = {
