@@ -1,15 +1,15 @@
--- Modules/Anchors.lua
+-- Modules/Display/AnchorDisplay.lua
 -- Manages anchor frames for both unit anchors (1-5) and group anchors (cc, interrupt, external)
 
 local RAT = _G.RAT
-RAT.Anchors = {}
+RAT.AnchorDisplay = {}
 
-local Anchors = RAT.Anchors
+local AnchorDisplay = RAT.AnchorDisplay
 
 local anchorFrames = {}
 local groupAnchors = {}
 
-function Anchors:Initialize()
+function AnchorDisplay:Initialize()
     self:CreateAnchors()
     self:CreateGroupAnchors()
 end
@@ -18,48 +18,12 @@ end
 -- Unit Anchor Management (1-5)
 --------------------------------------------------------------------------------
 
-function Anchors:CreateAnchors()
+function AnchorDisplay:CreateAnchors()
     for i = 1, 5 do
         if not anchorFrames[i] then
-            local anchor = CreateFrame("Frame", "RATAnchor" .. i, UIParent)
-            anchor:SetWidth(15)
-            anchor:SetHeight(15)
-            anchor:SetFrameStrata("MEDIUM")
-
-            local border = anchor:CreateTexture(nil, "BORDER")
-            border:SetPoint("TOPLEFT", anchor, "TOPLEFT", -1, 1)
-            border:SetPoint("BOTTOMRIGHT", anchor, "BOTTOMRIGHT", 1, -1)
-            border:SetTexture("Interface\\Buttons\\WHITE8X8")
-            border:SetVertexColor(0, 0, 0, 1)  -- Black
-            anchor.border = border
-
-            local bg = anchor:CreateTexture(nil, "BACKGROUND")
-            bg:SetAllPoints()
-            bg:SetTexture("Interface\\Tooltips\\UI-Tooltip-Background")
-            bg:SetVertexColor(1, 0, 0, 0.5)
-            anchor.bg = bg
-
-            local label = anchor:CreateFontString(nil, "OVERLAY", "GameFontNormal")
-            label:SetPoint("CENTER")
-            label:SetText(tostring(i))
-            anchor.label = label
-
-            anchor:EnableMouse(true)
-            anchor:SetMovable(true)
-            anchor:RegisterForDrag("LeftButton")
-
-            anchor:SetScript("OnDragStart", function(self)
-                if not RAT.db.profile.lockPositions then
-                    self:StartMoving()
-                end
-            end)
-
-            anchor:SetScript("OnDragStop", function(self)
-                self:StopMovingOrSizing()
+            anchorFrames[i] = RAT.AnchorFactory:CreateUnitAnchor(i, function()
                 Anchors:SaveAnchorPosition(i)
             end)
-
-            anchorFrames[i] = anchor
         end
     end
 
@@ -70,7 +34,7 @@ function Anchors:CreateAnchors()
     self:UpdateUnitAnchorsVisibility()
 end
 
-function Anchors:PositionAnchors()
+function AnchorDisplay:PositionAnchors()
     for i = 1, 5 do
         local anchor = anchorFrames[i]
         if anchor then
@@ -122,7 +86,7 @@ end
 
 --- Save anchor position to database
 -- @param index number Anchor index (1-5)
-function Anchors:SaveAnchorPosition(index)
+function AnchorDisplay:SaveAnchorPosition(index)
     local anchor = anchorFrames[index]
     if not anchor then return end
 
@@ -144,11 +108,11 @@ function Anchors:SaveAnchorPosition(index)
     RAT:DebugPrint(string.format("Saved position for anchor %d: TOPLEFT %.1f, %.1f", index, x, y))
 end
 
-function Anchors:ResetPositions()
+function AnchorDisplay:ResetPositions()
     RAT:ResetAllPositions()
 end
 
-function Anchors:UpdateAnchorsLockState()
+function AnchorDisplay:UpdateAnchorsLockState()
     local locked = RAT.db.profile.lockPositions
 
     for i = 1, 5 do
@@ -166,13 +130,13 @@ end
 --- Get unit anchor frame
 -- @param index number Anchor index (1-5)
 -- @return frame|nil Anchor frame
-function Anchors:GetAnchor(index)
+function AnchorDisplay:GetAnchor(index)
     return anchorFrames[index]
 end
 
 --- Show unit anchor (respects showAnchors setting)
 -- @param index number Anchor index (1-5)
-function Anchors:ShowAnchor(index)
+function AnchorDisplay:ShowAnchor(index)
     if anchorFrames[index] then
         -- Only show if showAnchors setting is enabled
         if RAT.db.profile.showAnchors then
@@ -183,7 +147,7 @@ end
 
 --- Hide unit anchor
 -- @param index number Anchor index (1-5)
-function Anchors:HideAnchor(index)
+function AnchorDisplay:HideAnchor(index)
     if anchorFrames[index] then
         anchorFrames[index]:Hide()
     end
@@ -193,51 +157,14 @@ end
 -- Group Anchor Management
 --------------------------------------------------------------------------------
 
-function Anchors:CreateGroupAnchors()
-    local groupTypes = {"cc", "interrupt", "external", "trinket"}
+function AnchorDisplay:CreateGroupAnchors()
+    local groupTypes = RAT.Constants.GROUP_TYPES
 
     for _, groupType in ipairs(groupTypes) do
         if not groupAnchors[groupType] then
-            local anchor = CreateFrame("Frame", "RATGroupAnchor_" .. groupType, UIParent)
-            anchor:SetWidth(20)
-            anchor:SetHeight(20)
-            anchor:SetFrameStrata("MEDIUM")
-
-            local border = anchor:CreateTexture(nil, "BORDER")
-            border:SetPoint("TOPLEFT", anchor, "TOPLEFT", -1, 1)
-            border:SetPoint("BOTTOMRIGHT", anchor, "BOTTOMRIGHT", 1, -1)
-            border:SetTexture("Interface\\Buttons\\WHITE8X8")
-            border:SetVertexColor(0, 0, 0, 1)
-            anchor.border = border
-
-            local bg = anchor:CreateTexture(nil, "BACKGROUND")
-            bg:SetAllPoints()
-            bg:SetTexture("Interface\\Tooltips\\UI-Tooltip-Background")
-            bg:SetVertexColor(0, 0.5, 1, 0.5)
-            anchor.bg = bg
-
-            local label = anchor:CreateFontString(nil, "OVERLAY", "GameFontNormal")
-            label:SetPoint("CENTER")
-            label:SetText(groupType:upper():sub(1,1))
-            anchor.label = label
-
-            anchor:EnableMouse(true)
-            anchor:SetMovable(true)
-            anchor:RegisterForDrag("LeftButton")
-
-            anchor:SetScript("OnDragStart", function(self)
-                if not RAT.db.profile.lockPositions then
-                    self:StartMoving()
-                end
-            end)
-
-            anchor:SetScript("OnDragStop", function(self)
-                self:StopMovingOrSizing()
+            groupAnchors[groupType] = RAT.AnchorFactory:CreateGroupAnchor(groupType, function()
                 Anchors:SaveGroupAnchorPosition(groupType)
             end)
-
-            anchor.groupType = groupType
-            groupAnchors[groupType] = anchor
         end
     end
 
@@ -246,8 +173,8 @@ function Anchors:CreateGroupAnchors()
     self:UpdateGroupAnchorsVisibility()
 end
 
-function Anchors:PositionGroupAnchors()
-    local groupTypes = {"cc", "interrupt", "external", "trinket"}
+function AnchorDisplay:PositionGroupAnchors()
+    local groupTypes = RAT.Constants.GROUP_TYPES
     local defaultY = -200
 
     for idx, groupType in ipairs(groupTypes) do
@@ -269,7 +196,7 @@ end
 
 --- Save group anchor position to database
 -- @param groupType string Group type ("cc", "interrupt", "external")
-function Anchors:SaveGroupAnchorPosition(groupType)
+function AnchorDisplay:SaveGroupAnchorPosition(groupType)
     local anchor = groupAnchors[groupType]
     if not anchor then return end
 
@@ -298,7 +225,7 @@ function Anchors:SaveGroupAnchorPosition(groupType)
     RAT:DebugPrint(string.format("Saved position for group anchor '%s': TOPLEFT %.1f, %.1f", groupType, x, y))
 end
 
-function Anchors:UpdateGroupAnchorsVisibility()
+function AnchorDisplay:UpdateGroupAnchorsVisibility()
     if not RAT.db.profile.showAnchors then
         for _, anchor in pairs(groupAnchors) do
             anchor:Hide()
@@ -339,7 +266,7 @@ function Anchors:UpdateGroupAnchorsVisibility()
     end
 end
 
-function Anchors:UpdateUnitAnchorsVisibility()
+function AnchorDisplay:UpdateUnitAnchorsVisibility()
     if not RAT.db.profile.showAnchors then
         for i = 1, 5 do
             if anchorFrames[i] then
@@ -358,7 +285,7 @@ end
 --- Get group anchor frame
 -- @param groupType string Group type ("cc", "interrupt", "external")
 -- @return frame|nil Anchor frame
-function Anchors:GetGroupAnchor(groupType)
+function AnchorDisplay:GetGroupAnchor(groupType)
     return groupAnchors[groupType]
 end
 

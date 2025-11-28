@@ -18,18 +18,32 @@ Core\Init.lua
 Core\Config.lua
 Core\Options.lua
 
-# Data
-Data\Spells.lua
+# Utilities
+Utils\Constants.lua
+Utils\StateHelpers.lua
+Utils\PositioningHelpers.lua
 
-# Modules
-Modules\Units.lua
-Modules\Comm.lua
-Modules\Inspection.lua
-Modules\Spells.lua
-Modules\Tracker.lua
-Modules\IconHelpers.lua
-Modules\Anchors.lua
-Modules\PartySpells.lua
-Modules\ExtraSpells.lua
-Modules\InterruptBars.lua
-Modules\Icons.lua
+# Data Layer
+Data\Spells.lua
+Data\SpellQueries.lua
+
+# Factory Layer
+Modules\Factory\AnchorFactory.lua
+Modules\Factory\IconFactory.lua
+Modules\Factory\BarFactory.lua
+
+# Manager Layer (Business Logic & State)
+Modules\Manager\UnitsManager.lua
+Modules\Manager\SpellManager.lua
+Modules\Manager\InspectionManager.lua
+Modules\Manager\TrackerManager.lua
+Modules\Manager\IconManager.lua
+
+# Display Layer (UI Presentation)
+Modules\Display\AnchorDisplay.lua
+Modules\Display\PartySpellsDisplay.lua
+Modules\Display\ExtraSpellsDisplay.lua
+Modules\Display\InterruptBarDisplay.lua
+
+# Communication Layer
+Modules\Communication\CommManager.lua

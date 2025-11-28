@@ -1,18 +1,18 @@
--- Modules/PartySpells.lua
+-- Modules/Display/PartySpellsDisplay.lua
 -- Handles spell icon display for individual party members (unit anchors 1-5)
 
 local RAT = _G.RAT
-RAT.PartySpells = {}
+RAT.PartySpellsDisplay = {}
 
-local PartySpells = RAT.PartySpells
+local PartySpellsDisplay = RAT.PartySpellsDisplay
 
-function PartySpells:Initialize()
+function PartySpellsDisplay:Initialize()
 end
 
 --- Update icons for a specific unit anchor
 -- @param index number Anchor index (1-5)
-function PartySpells:UpdateAnchorIcons(index)
-    local anchor = RAT.Anchors:GetAnchor(index)
+function PartySpellsDisplay:UpdateAnchorIcons(index)
+    local anchor = RAT.AnchorDisplay:GetAnchor(index)
     if not anchor then return end
 
     if not RAT.db.profile.partySpells.enabled then
@@ -20,7 +20,7 @@ function PartySpells:UpdateAnchorIcons(index)
         return
     end
 
-    if RAT.db.profile.partySpells.hideInRaid and RAT.Units:IsInRaid() then
+    if RAT.db.profile.partySpells.hideInRaid and RAT.UnitsManager:IsInRaid() then
         self:HideAnchorIcons(index)
         return
     end
@@ -34,13 +34,13 @@ function PartySpells:UpdateAnchorIcons(index)
     local guid = partyData.guid
 
     local spells = {}
-    if RAT.Spells then
-        spells = RAT.Spells:GetSpellsForGUID(guid)
+    if RAT.SpellManager then
+        spells = RAT.SpellManager:GetSpellsForGUID(guid)
     end
 
     local filteredSpells = {}
     for _, spellInfo in ipairs(spells) do
-        if RAT.IconHelpers:IsSpellEnabledForGroup("party", spellInfo.name) then
+        if RAT:IsSpellEnabledForGroup("party", spellInfo.name) then
             table.insert(filteredSpells, spellInfo)
         end
     end
@@ -56,7 +56,7 @@ end
 -- @param anchor frame Anchor frame
 -- @param guid string Player GUID
 -- @param spells table Array of {name, cd, spellData, guid, unit} tables
-function PartySpells:UpdateAnchorIconDisplay(index, anchor, guid, spells)
+function PartySpellsDisplay:UpdateAnchorIconDisplay(index, anchor, guid, spells)
     local iconsPerRow = RAT.db.profile.partySpells.iconsPerRow
     local spacing = RAT.db.profile.partySpells.spacing
     local scale = RAT.db.profile.partySpells.scale
@@ -79,13 +79,13 @@ function PartySpells:UpdateAnchorIconDisplay(index, anchor, guid, spells)
         anchor.icons = {}
     end
 
-    local spellListChanged = RAT.IconHelpers:HasSpellListChanged(anchor, spells, false)
+    local spellListChanged = RAT.IconManager:HasSpellListChanged(anchor, spells, false)
 
     if spellListChanged then
         RAT:DebugPrint(string.format("Spell list changed for anchor %d - recreating icons", index))
-        RAT.IconHelpers:ReleaseAllIcons(anchor)
+        RAT.IconManager:ReleaseAllIcons(anchor)
     else
-        RAT.IconHelpers:UpdateIconsCooldownState(anchor, spells, function(spellInfo)
+        RAT.IconManager:UpdateIconsCooldownState(anchor, spells, function(spellInfo)
             return guid
         end)
         return
@@ -96,7 +96,7 @@ function PartySpells:UpdateAnchorIconDisplay(index, anchor, guid, spells)
     local offsetY = RAT.db.profile.anchorOffsetY or 0
 
     for i, spellInfo in ipairs(spells) do
-        local icon = RAT.Icons:AcquireIcon()
+        local icon = RAT.IconManager:AcquireIcon()
 
         icon.spellName = spellInfo.name
         icon.spellID = spellInfo.spellData.id
@@ -104,16 +104,16 @@ function PartySpells:UpdateAnchorIconDisplay(index, anchor, guid, spells)
         icon.guid = guid
         icon.anchorIndex = index
 
-        RAT.IconHelpers:SetSpellTexture(icon, spellInfo.name, spellInfo.spellData)
+        RAT.IconFactory:SetIconTexture(icon, spellInfo.name, spellInfo.spellData)
 
         if i == 1 then
             local firstPoint, firstRelPoint, firstX, firstY =
-                RAT.IconHelpers:CalculateFirstIconPosition(growth, offsetX, offsetY)
+                RAT.PositioningHelpers:CalculateFirstIconPosition(growth, offsetX, offsetY)
 
             icon:SetPoint(firstPoint, baseFrame, firstRelPoint, firstX, firstY)
         else
             local point, relPoint, xOff, yOff, isNewRow =
-                RAT.IconHelpers:CalculateIconPosition(i, growth, iconsPerRow, spacing)
+                RAT.PositioningHelpers:CalculateIconPosition(i, growth, iconsPerRow, spacing)
 
             if isNewRow then
                 local prevRowIcon = anchor.icons[i - iconsPerRow]
@@ -126,9 +126,9 @@ function PartySpells:UpdateAnchorIconDisplay(index, anchor, guid, spells)
 
         icon:SetScale(scale)
 
-        RAT.IconHelpers:ApplyCooldownState(icon, guid, spellInfo.name,
-            function(obj, start, dur) RAT.Icons:StartIconCooldown(obj, start, dur) end,
-            function(obj) RAT.Icons:SetIconReady(obj) end
+        RAT.IconManager:ApplyCooldownState(icon, guid, spellInfo.name,
+            function(obj, start, dur) RAT.IconManager:StartIconCooldown(obj, start, dur) end,
+            function(obj) RAT.IconManager:SetIconReady(obj) end
         )
 
         icon:Show()
@@ -139,10 +139,10 @@ end
 
 --- Hide icons for a specific anchor
 -- @param index number Anchor index (1-5)
-function PartySpells:HideAnchorIcons(index)
-    local anchor = RAT.Anchors:GetAnchor(index)
+function PartySpellsDisplay:HideAnchorIcons(index)
+    local anchor = RAT.AnchorDisplay:GetAnchor(index)
     if not anchor then return end
 
-    RAT.IconHelpers:ReleaseAllIcons(anchor)
+    RAT.IconManager:ReleaseAllIcons(anchor)
 end
 

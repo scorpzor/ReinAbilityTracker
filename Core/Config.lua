@@ -136,13 +136,13 @@ function RAT:ResetAllPositions()
     wipe(self.db.profile.positions)
     wipe(self.db.profile.groupAnchors.positions)
 
-    if self.Anchors then
-        self.Anchors:PositionAnchors()
-        self.Anchors:PositionGroupAnchors()
+    if self.AnchorDisplay then
+        self.AnchorDisplay:PositionAnchors()
+        self.AnchorDisplay:PositionGroupAnchors()
     end
 
-    if self.Icons then
-        self.Icons:RefreshAllDisplays()
+    if self.IconManager then
+        self.IconManager:RefreshAllDisplays()
     end
 end
 
@@ -182,8 +182,8 @@ function RAT:SlashCommand(input)
     end
 
     if cmd == "toggle" then
-        if self.Icons then
-            self.Icons:Toggle()
+        if self.IconManager then
+            self.IconManager:Toggle()
         end
         return
     end
@@ -193,10 +193,10 @@ function RAT:SlashCommand(input)
         self.db.profile.lockPositions = not self.db.profile.showAnchors
         local state = self.db.profile.showAnchors and "unlocked/visible" or "locked/hidden"
         self:Print("Anchors: " .. state)
-        if self.Anchors then
-            self.Anchors:UpdateUnitAnchorsVisibility()
-            self.Anchors:UpdateGroupAnchorsVisibility()
-            self.Anchors:UpdateAnchorsLockState()
+        if self.AnchorDisplay then
+            self.AnchorDisplay:UpdateUnitAnchorsVisibility()
+            self.AnchorDisplay:UpdateGroupAnchorsVisibility()
+            self.AnchorDisplay:UpdateAnchorsLockState()
         end
         return
     end
@@ -233,8 +233,8 @@ function RAT:SlashCommand(input)
         if point == "TOPLEFT" or point == "TOPRIGHT" or point == "BOTTOMLEFT" or point == "BOTTOMRIGHT" then
             self.db.profile.anchorPoint = point
             self:Print("Anchor point set to: " .. point)
-            if self.Icons then
-                self.Icons:PositionAnchors()
+            if self.IconManager then
+                self.IconManager:PositionAnchors()
             end
         else
             self:Print("Invalid anchor point. Use: TOPLEFT, TOPRIGHT, BOTTOMLEFT, or BOTTOMRIGHT")
@@ -254,8 +254,8 @@ function RAT:SlashCommand(input)
         if direction == "RIGHT" or direction == "LEFT" or direction == "DOWN" or direction == "UP" then
             self.db.profile.anchorGrowth = direction
             self:Print("Growth direction set to: " .. direction)
-            if self.Icons then
-                self.Icons:RefreshAllDisplays()
+            if self.IconManager then
+                self.IconManager:RefreshAllDisplays()
             end
         else
             self:Print("Invalid direction. Use: RIGHT, LEFT, DOWN, or UP")
@@ -277,8 +277,8 @@ function RAT:SlashCommand(input)
         self.db.profile.anchorOffsetX = x
         self.db.profile.anchorOffsetY = y
         self:Print(string.format("Offset set to: X=%d, Y=%d", x, y))
-        if self.Icons then
-            self.Icons:PositionAnchors()
+        if self.IconManager then
+            self.IconManager:PositionAnchors()
         end
         return
     end
@@ -328,8 +328,8 @@ function RAT:RefreshConfig()
     self:Print("Profile changed, reloading...")
 
     if self.State.isInitialized then
-        if self.Icons then
-            self.Icons:RefreshAllDisplays()
+        if self.IconManager then
+            self.IconManager:RefreshAllDisplays()
         end
     end
 end
@@ -435,5 +435,51 @@ end
 -- @return table|nil Position data or nil if not saved
 function RAT:GetPosition(index)
     return self.db.profile.positions[index]
+end
+
+--------------------------------------------------------------------------------
+-- Spell Filtering
+--------------------------------------------------------------------------------
+
+--- Check if a spell is enabled in settings
+-- @param category string Category name (class or race)
+-- @param spellName string Spell name
+-- @return boolean True if spell is enabled
+function RAT:IsSpellEnabled(category, spellName)
+    if not self.db or not self.db.profile.enabledSpells then
+        return true
+    end
+
+    local categorySpells = self.db.profile.enabledSpells[category]
+    if not categorySpells then
+        return true
+    end
+
+    if categorySpells[spellName] ~= nil then
+        return categorySpells[spellName]
+    end
+
+    return true
+end
+
+--- Check if a spell is enabled for a specific display group
+-- @param groupType string Group type ("party", "cc", "interrupt", "external", "trinket")
+-- @param spellName string Spell name
+-- @return boolean True if enabled for this group
+function RAT:IsSpellEnabledForGroup(groupType, spellName)
+    if not self.db or not self.db.profile.spellGroupFilters then
+        return true
+    end
+
+    local groupFilters = self.db.profile.spellGroupFilters[groupType]
+    if not groupFilters then
+        return true
+    end
+
+    if groupFilters[spellName] ~= nil then
+        return groupFilters[spellName]
+    end
+
+    return true
 end
 

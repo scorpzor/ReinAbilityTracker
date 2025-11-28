@@ -53,10 +53,10 @@ local function GetOptions()
                             RAT.db.profile.showAnchors = value
                             -- Lock state follows show state: shown = unlocked, hidden = locked
                             RAT.db.profile.lockPositions = not value
-                            if RAT.Anchors then
-                                RAT.Anchors:UpdateUnitAnchorsVisibility()
-                                RAT.Anchors:UpdateGroupAnchorsVisibility()
-                                RAT.Anchors:UpdateAnchorsLockState()
+                            if RAT.AnchorDisplay then
+                                RAT.AnchorDisplay:UpdateUnitAnchorsVisibility()
+                                RAT.AnchorDisplay:UpdateGroupAnchorsVisibility()
+                                RAT.AnchorDisplay:UpdateAnchorsLockState()
                             end
                         end,
                     },
@@ -95,8 +95,8 @@ local function GetOptions()
                         get = function() return RAT.db.profile.partySpells.enabled end,
                         set = function(_, value)
                             RAT.db.profile.partySpells.enabled = value
-                            if RAT.Icons then
-                                RAT.Icons:RefreshAllDisplays()
+                            if RAT.IconManager then
+                                RAT.IconManager:RefreshAllDisplays()
                             end
                         end,
                     },
@@ -109,8 +109,8 @@ local function GetOptions()
                         get = function() return RAT.db.profile.partySpells.hideInRaid end,
                         set = function(_, value)
                             RAT.db.profile.partySpells.hideInRaid = value
-                            if RAT.Icons then
-                                RAT.Icons:RefreshAllDisplays()
+                            if RAT.IconManager then
+                                RAT.IconManager:RefreshAllDisplays()
                             end
                         end,
                     },
@@ -126,8 +126,8 @@ local function GetOptions()
                         get = function() return RAT.db.profile.partySpells.scale end,
                         set = function(_, value)
                             RAT.db.profile.partySpells.scale = value
-                            if RAT.Icons then
-                                RAT.Icons:RefreshAllDisplays()
+                            if RAT.IconManager then
+                                RAT.IconManager:RefreshAllDisplays()
                             end
                         end,
                     },
@@ -143,8 +143,8 @@ local function GetOptions()
                         get = function() return RAT.db.profile.partySpells.spacing end,
                         set = function(_, value)
                             RAT.db.profile.partySpells.spacing = value
-                            if RAT.Icons then
-                                RAT.Icons:RefreshAllDisplays()
+                            if RAT.IconManager then
+                                RAT.IconManager:RefreshAllDisplays()
                             end
                         end,
                     },
@@ -160,8 +160,8 @@ local function GetOptions()
                         get = function() return RAT.db.profile.partySpells.iconsPerRow end,
                         set = function(_, value)
                             RAT.db.profile.partySpells.iconsPerRow = value
-                            if RAT.Icons then
-                                RAT.Icons:RefreshAllDisplays()
+                            if RAT.IconManager then
+                                RAT.IconManager:RefreshAllDisplays()
                             end
                         end,
                     },
@@ -180,8 +180,8 @@ local function GetOptions()
                         get = function() return RAT.db.profile.anchorPoint end,
                         set = function(_, value)
                             RAT.db.profile.anchorPoint = value
-                            if RAT.Icons then
-                                RAT.Icons:PositionAnchors()
+                            if RAT.IconManager then
+                                RAT.IconManager:PositionAnchors()
                             end
                         end,
                     },
@@ -200,8 +200,8 @@ local function GetOptions()
                         get = function() return RAT.db.profile.anchorGrowth end,
                         set = function(_, value)
                             RAT.db.profile.anchorGrowth = value
-                            if RAT.Icons then
-                                RAT.Icons:RefreshAllDisplays()
+                            if RAT.IconManager then
+                                RAT.IconManager:RefreshAllDisplays()
                             end
                         end,
                     },
@@ -217,8 +217,8 @@ local function GetOptions()
                         get = function() return RAT.db.profile.anchorOffsetX end,
                         set = function(_, value)
                             RAT.db.profile.anchorOffsetX = value
-                            if RAT.Icons then
-                                RAT.Icons:PositionAnchors()
+                            if RAT.IconManager then
+                                RAT.IconManager:PositionAnchors()
                             end
                         end,
                     },
@@ -234,8 +234,8 @@ local function GetOptions()
                         get = function() return RAT.db.profile.anchorOffsetY end,
                         set = function(_, value)
                             RAT.db.profile.anchorOffsetY = value
-                            if RAT.Icons then
-                                RAT.Icons:PositionAnchors()
+                            if RAT.IconManager then
+                                RAT.IconManager:PositionAnchors()
                             end
                         end,
                     },
@@ -254,9 +254,9 @@ local function GetOptions()
                         get = function() return RAT.db.profile.groupAnchors.showCC end,
                         set = function(_, value)
                             RAT.db.profile.groupAnchors.showCC = value
-                            if RAT.Icons then
-                                RAT.Anchors:UpdateGroupAnchorsVisibility()
-                                RAT.Icons:RefreshAllDisplays()
+                            if RAT.IconManager then
+                                RAT.AnchorDisplay:UpdateGroupAnchorsVisibility()
+                                RAT.IconManager:RefreshAllDisplays()
                             end
                         end,
                     },
@@ -272,8 +272,8 @@ local function GetOptions()
                         get = function() return RAT.db.profile.groupAnchors.cc.scale end,
                         set = function(_, value)
                             RAT.db.profile.groupAnchors.cc.scale = value
-                            if RAT.Icons then
-                                RAT.Icons:RefreshAllDisplays()
+                            if RAT.IconManager then
+                                RAT.IconManager:RefreshAllDisplays()
                             end
                         end,
                     },
@@ -289,8 +289,8 @@ local function GetOptions()
                         get = function() return RAT.db.profile.groupAnchors.cc.spacing end,
                         set = function(_, value)
                             RAT.db.profile.groupAnchors.cc.spacing = value
-                            if RAT.Icons then
-                                RAT.Icons:RefreshAllDisplays()
+                            if RAT.IconManager then
+                                RAT.IconManager:RefreshAllDisplays()
                             end
                         end,
                     },
@@ -306,8 +306,8 @@ local function GetOptions()
                         get = function() return RAT.db.profile.groupAnchors.cc.iconsPerRow end,
                         set = function(_, value)
                             RAT.db.profile.groupAnchors.cc.iconsPerRow = value
-                            if RAT.Icons then
-                                RAT.Icons:RefreshAllDisplays()
+                            if RAT.IconManager then
+                                RAT.IconManager:RefreshAllDisplays()
                             end
                         end,
                     },
@@ -326,8 +326,8 @@ local function GetOptions()
                         get = function() return RAT.db.profile.groupAnchors.cc.growth end,
                         set = function(_, value)
                             RAT.db.profile.groupAnchors.cc.growth = value
-                            if RAT.Icons then
-                                RAT.Icons:RefreshAllDisplays()
+                            if RAT.IconManager then
+                                RAT.IconManager:RefreshAllDisplays()
                             end
                         end,
                     },
@@ -346,9 +346,9 @@ local function GetOptions()
                         get = function() return RAT.db.profile.groupAnchors.showInterrupt end,
                         set = function(_, value)
                             RAT.db.profile.groupAnchors.showInterrupt = value
-                            if RAT.Icons then
-                                RAT.Anchors:UpdateGroupAnchorsVisibility()
-                                RAT.Icons:RefreshAllDisplays()
+                            if RAT.IconManager then
+                                RAT.AnchorDisplay:UpdateGroupAnchorsVisibility()
+                                RAT.IconManager:RefreshAllDisplays()
                             end
                         end,
                     },
@@ -361,8 +361,8 @@ local function GetOptions()
                         get = function() return RAT.db.profile.interruptBars.hideInRaid end,
                         set = function(_, value)
                             RAT.db.profile.interruptBars.hideInRaid = value
-                            if RAT.Icons then
-                                RAT.Icons:RefreshAllDisplays()
+                            if RAT.IconManager then
+                                RAT.IconManager:RefreshAllDisplays()
                             end
                         end,
                     },
@@ -378,8 +378,8 @@ local function GetOptions()
                         get = function() return RAT.db.profile.interruptBars.barWidth end,
                         set = function(_, value)
                             RAT.db.profile.interruptBars.barWidth = value
-                            if RAT.Icons then
-                                RAT.Icons:RefreshAllDisplays()
+                            if RAT.IconManager then
+                                RAT.IconManager:RefreshAllDisplays()
                             end
                         end,
                     },
@@ -395,8 +395,8 @@ local function GetOptions()
                         get = function() return RAT.db.profile.interruptBars.barHeight end,
                         set = function(_, value)
                             RAT.db.profile.interruptBars.barHeight = value
-                            if RAT.Icons then
-                                RAT.Icons:RefreshAllDisplays()
+                            if RAT.IconManager then
+                                RAT.IconManager:RefreshAllDisplays()
                             end
                         end,
                     },
@@ -414,8 +414,8 @@ local function GetOptions()
                         get = function() return RAT.db.profile.interruptBars.barTexture end,
                         set = function(_, value)
                             RAT.db.profile.interruptBars.barTexture = value
-                            if RAT.Icons then
-                                RAT.Icons:RefreshAllDisplays()
+                            if RAT.IconManager then
+                                RAT.IconManager:RefreshAllDisplays()
                             end
                         end,
                     },
@@ -432,8 +432,8 @@ local function GetOptions()
                         get = function() return RAT.db.profile.interruptBars.fillDirection end,
                         set = function(_, value)
                             RAT.db.profile.interruptBars.fillDirection = value
-                            if RAT.Icons then
-                                RAT.Icons:RefreshAllDisplays()
+                            if RAT.IconManager then
+                                RAT.IconManager:RefreshAllDisplays()
                             end
                         end,
                     },
@@ -452,9 +452,9 @@ local function GetOptions()
                         get = function() return RAT.db.profile.groupAnchors.showExternal end,
                         set = function(_, value)
                             RAT.db.profile.groupAnchors.showExternal = value
-                            if RAT.Icons then
-                                RAT.Anchors:UpdateGroupAnchorsVisibility()
-                                RAT.Icons:RefreshAllDisplays()
+                            if RAT.IconManager then
+                                RAT.AnchorDisplay:UpdateGroupAnchorsVisibility()
+                                RAT.IconManager:RefreshAllDisplays()
                             end
                         end,
                     },
@@ -470,8 +470,8 @@ local function GetOptions()
                         get = function() return RAT.db.profile.groupAnchors.external.scale end,
                         set = function(_, value)
                             RAT.db.profile.groupAnchors.external.scale = value
-                            if RAT.Icons then
-                                RAT.Icons:RefreshAllDisplays()
+                            if RAT.IconManager then
+                                RAT.IconManager:RefreshAllDisplays()
                             end
                         end,
                     },
@@ -487,8 +487,8 @@ local function GetOptions()
                         get = function() return RAT.db.profile.groupAnchors.external.spacing end,
                         set = function(_, value)
                             RAT.db.profile.groupAnchors.external.spacing = value
-                            if RAT.Icons then
-                                RAT.Icons:RefreshAllDisplays()
+                            if RAT.IconManager then
+                                RAT.IconManager:RefreshAllDisplays()
                             end
                         end,
                     },
@@ -504,8 +504,8 @@ local function GetOptions()
                         get = function() return RAT.db.profile.groupAnchors.external.iconsPerRow end,
                         set = function(_, value)
                             RAT.db.profile.groupAnchors.external.iconsPerRow = value
-                            if RAT.Icons then
-                                RAT.Icons:RefreshAllDisplays()
+                            if RAT.IconManager then
+                                RAT.IconManager:RefreshAllDisplays()
                             end
                         end,
                     },
@@ -524,8 +524,8 @@ local function GetOptions()
                         get = function() return RAT.db.profile.groupAnchors.external.growth end,
                         set = function(_, value)
                             RAT.db.profile.groupAnchors.external.growth = value
-                            if RAT.Icons then
-                                RAT.Icons:RefreshAllDisplays()
+                            if RAT.IconManager then
+                                RAT.IconManager:RefreshAllDisplays()
                             end
                         end,
                     },
@@ -544,9 +544,9 @@ local function GetOptions()
                         get = function() return RAT.db.profile.groupAnchors.showTrinket end,
                         set = function(_, value)
                             RAT.db.profile.groupAnchors.showTrinket = value
-                            if RAT.Icons then
-                                RAT.Anchors:UpdateGroupAnchorsVisibility()
-                                RAT.Icons:RefreshAllDisplays()
+                            if RAT.IconManager then
+                                RAT.AnchorDisplay:UpdateGroupAnchorsVisibility()
+                                RAT.IconManager:RefreshAllDisplays()
                             end
                         end,
                     },
@@ -562,8 +562,8 @@ local function GetOptions()
                         get = function() return RAT.db.profile.groupAnchors.trinket.scale end,
                         set = function(_, value)
                             RAT.db.profile.groupAnchors.trinket.scale = value
-                            if RAT.Icons then
-                                RAT.Icons:RefreshAllDisplays()
+                            if RAT.IconManager then
+                                RAT.IconManager:RefreshAllDisplays()
                             end
                         end,
                     },
@@ -579,8 +579,8 @@ local function GetOptions()
                         get = function() return RAT.db.profile.groupAnchors.trinket.spacing end,
                         set = function(_, value)
                             RAT.db.profile.groupAnchors.trinket.spacing = value
-                            if RAT.Icons then
-                                RAT.Icons:RefreshAllDisplays()
+                            if RAT.IconManager then
+                                RAT.IconManager:RefreshAllDisplays()
                             end
                         end,
                     },
@@ -596,8 +596,8 @@ local function GetOptions()
                         get = function() return RAT.db.profile.groupAnchors.trinket.iconsPerRow end,
                         set = function(_, value)
                             RAT.db.profile.groupAnchors.trinket.iconsPerRow = value
-                            if RAT.Icons then
-                                RAT.Icons:RefreshAllDisplays()
+                            if RAT.IconManager then
+                                RAT.IconManager:RefreshAllDisplays()
                             end
                         end,
                     },
@@ -616,8 +616,8 @@ local function GetOptions()
                         get = function() return RAT.db.profile.groupAnchors.trinket.growth end,
                         set = function(_, value)
                             RAT.db.profile.groupAnchors.trinket.growth = value
-                            if RAT.Icons then
-                                RAT.Icons:RefreshAllDisplays()
+                            if RAT.IconManager then
+                                RAT.IconManager:RefreshAllDisplays()
                             end
                         end,
                     },
@@ -679,8 +679,8 @@ local function GetOptions()
 
                             RAT.db.profile.spellGroupFilters[selectedGroup][spellName] = value
 
-                            if RAT.Icons then
-                                RAT.Icons:RefreshAllDisplays()
+                            if RAT.IconManager then
+                                RAT.IconManager:RefreshAllDisplays()
                             end
                         end,
                     },
@@ -693,8 +693,8 @@ local function GetOptions()
     local selectedGroup = RAT.db and RAT.db.profile.spellFilterSelectedGroup or "party"
     local spellData = {}
 
-    if RAT.Spells and RAT.Spells.GetAllSpellsForGroup then
-        spellData = RAT.Spells:GetAllSpellsForGroup(selectedGroup)
+    if RAT.SpellManager and RAT.SpellManager.GetAllSpellsForGroup then
+        spellData = RAT.SpellManager:GetAllSpellsForGroup(selectedGroup)
     end
 
     local order = 10
@@ -726,8 +726,8 @@ local function GetOptions()
                             for _, spellName in ipairs(spells) do
                                 RAT.db.profile.spellGroupFilters[group][spellName] = true
                             end
-                            if RAT.Icons then
-                                RAT.Icons:RefreshAllDisplays()
+                            if RAT.IconManager then
+                                RAT.IconManager:RefreshAllDisplays()
                             end
                         end,
                     },
@@ -743,8 +743,8 @@ local function GetOptions()
                             for _, spellName in ipairs(spells) do
                                 RAT.db.profile.spellGroupFilters[group][spellName] = false
                             end
-                            if RAT.Icons then
-                                RAT.Icons:RefreshAllDisplays()
+                            if RAT.IconManager then
+                                RAT.IconManager:RefreshAllDisplays()
                             end
                         end,
                     },
@@ -770,8 +770,8 @@ local function GetOptions()
 
                     RAT.db.profile.spellGroupFilters[group][spellName] = value
 
-                    if RAT.Icons then
-                        RAT.Icons:RefreshAllDisplays()
+                    if RAT.IconManager then
+                        RAT.IconManager:RefreshAllDisplays()
                     end
                 end,
             }
@@ -821,8 +821,8 @@ local function GetOptions()
                         for _, spellName in ipairs(allRacialSpells) do
                             RAT.db.profile.spellGroupFilters[group][spellName] = true
                         end
-                        if RAT.Icons then
-                            RAT.Icons:RefreshAllDisplays()
+                        if RAT.IconManager then
+                            RAT.IconManager:RefreshAllDisplays()
                         end
                     end,
                 },
@@ -838,8 +838,8 @@ local function GetOptions()
                         for _, spellName in ipairs(allRacialSpells) do
                             RAT.db.profile.spellGroupFilters[group][spellName] = false
                         end
-                        if RAT.Icons then
-                            RAT.Icons:RefreshAllDisplays()
+                        if RAT.IconManager then
+                            RAT.IconManager:RefreshAllDisplays()
                         end
                     end,
                 },
@@ -865,8 +865,8 @@ local function GetOptions()
 
                 RAT.db.profile.spellGroupFilters[group][spellName] = value
 
-                if RAT.Icons then
-                    RAT.Icons:RefreshAllDisplays()
+                if RAT.IconManager then
+                    RAT.IconManager:RefreshAllDisplays()
                 end
             end,
         }
@@ -901,8 +901,8 @@ local function GetOptions()
                         for _, spellName in ipairs(spellData.trinkets) do
                             RAT.db.profile.spellGroupFilters[group][spellName] = true
                         end
-                        if RAT.Icons then
-                            RAT.Icons:RefreshAllDisplays()
+                        if RAT.IconManager then
+                            RAT.IconManager:RefreshAllDisplays()
                         end
                     end,
                 },
@@ -918,8 +918,8 @@ local function GetOptions()
                         for _, spellName in ipairs(spellData.trinkets) do
                             RAT.db.profile.spellGroupFilters[group][spellName] = false
                         end
-                        if RAT.Icons then
-                            RAT.Icons:RefreshAllDisplays()
+                        if RAT.IconManager then
+                            RAT.IconManager:RefreshAllDisplays()
                         end
                     end,
                 },
@@ -945,8 +945,8 @@ local function GetOptions()
 
                 RAT.db.profile.spellGroupFilters[group][spellName] = value
 
-                if RAT.Icons then
-                    RAT.Icons:RefreshAllDisplays()
+                if RAT.IconManager then
+                    RAT.IconManager:RefreshAllDisplays()
                 end
             end,
         }
@@ -990,8 +990,8 @@ local function GetOptions()
                                 for _, spellName in ipairs(enchants) do
                                     RAT.db.profile.spellGroupFilters[group][spellName] = true
                                 end
-                                if RAT.Icons then
-                                    RAT.Icons:RefreshAllDisplays()
+                                if RAT.IconManager then
+                                    RAT.IconManager:RefreshAllDisplays()
                                 end
                             end,
                         },
@@ -1007,8 +1007,8 @@ local function GetOptions()
                                 for _, spellName in ipairs(enchants) do
                                     RAT.db.profile.spellGroupFilters[group][spellName] = false
                                 end
-                                if RAT.Icons then
-                                    RAT.Icons:RefreshAllDisplays()
+                                if RAT.IconManager then
+                                    RAT.IconManager:RefreshAllDisplays()
                                 end
                             end,
                         },
@@ -1034,8 +1034,8 @@ local function GetOptions()
 
                         RAT.db.profile.spellGroupFilters[group][spellName] = value
 
-                        if RAT.Icons then
-                            RAT.Icons:RefreshAllDisplays()
+                        if RAT.IconManager then
+                            RAT.IconManager:RefreshAllDisplays()
                         end
                     end,
                 }

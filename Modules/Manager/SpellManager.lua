@@ -1,10 +1,10 @@
--- Modules/Spells.lua
+-- Modules/Manager/SpellManager.lua
 -- Collects and manages spell data for all tracked units
 
 local RAT = _G.RAT
-RAT.Spells = {}
+RAT.SpellManager = {}
 
-local Spells = RAT.Spells
+local SpellManager = RAT.SpellManager
 
 -- Cached spell lists per GUID
 -- Structure: { [guid] = { all = {...}, cc = {...}, interrupt = {...}, external = {...} } }
@@ -14,7 +14,7 @@ local unitSpells = {}
 -- Initialization
 --------------------------------------------------------------------------------
 
-function Spells:Initialize()
+function SpellManager:Initialize()
     -- Spell cache is updated by:
     -- 1. Comm module when receiving build data from party members
     -- 2. Inspection module after inspecting player
@@ -28,12 +28,12 @@ end
 
 --- Update spell cache for all tracked units
 -- Called when party composition changes or talents update
-function Spells:UpdateAllUnitSpells()
+function SpellManager:UpdateAllUnitSpells()
     RAT:DebugPrint("Spells:UpdateAllUnitSpells() - Rebuilding spell cache")
     wipe(unitSpells)
 
-    if not RAT.Units then return end
-    local allUnits = RAT.Units:GetAllUnits()
+    if not RAT.UnitsManager then return end
+    local allUnits = RAT.UnitsManager:GetAllUnits()
 
     for guid, unitData in pairs(allUnits) do
         self:UpdateUnitSpells(guid, unitData)
@@ -45,7 +45,7 @@ end
 --- Update spell cache for a specific unit (incremental update)
 -- @param guid string Unit GUID
 -- @param unitData table Unit data from Units module {guid, unit, name, class, race, type}
-function Spells:UpdateUnitSpells(guid, unitData)
+function SpellManager:UpdateUnitSpells(guid, unitData)
     if not guid or not unitData then return end
 
     unitSpells[guid] = self:CollectSpellsForGUID(guid, unitData)
@@ -55,7 +55,7 @@ end
 -- @param guid string Unit GUID
 -- @param unitData table Unit data from Units module {guid, unit, name, class, race, type}
 -- @return table Spell data organized by type {all, cc, interrupt, external}
-function Spells:CollectSpellsForGUID(guid, unitData)
+function SpellManager:CollectSpellsForGUID(guid, unitData)
     local class = unitData.class
     local race = unitData.race
 
@@ -75,10 +75,10 @@ function Spells:CollectSpellsForGUID(guid, unitData)
             for _, spellName in ipairs(classSpells) do
                 local spellData = RAT.Data:GetSpellData(spellName)
                 if spellData then
-                    if RAT.IconHelpers and RAT.IconHelpers:IsSpellEnabled(class, spellName) then
+                    if RAT:IsSpellEnabled(class, spellName) then
                         local hasSpell = true
-                        if spellData.spec and RAT.Inspection then
-                            hasSpell = RAT.Inspection:GUIDHasTalent(guid, spellName)
+                        if spellData.spec and RAT.InspectionManager then
+                            hasSpell = RAT.InspectionManager:GUIDHasTalent(guid, spellName)
                         end
 
                         if hasSpell then
@@ -109,7 +109,7 @@ function Spells:CollectSpellsForGUID(guid, unitData)
             for _, spellName in ipairs(raceSpells) do
                 local spellData = RAT.Data:GetSpellData(spellName)
                 if spellData then
-                    if RAT.IconHelpers and RAT.IconHelpers:IsSpellEnabled(race, spellName) then
+                    if RAT:IsSpellEnabled(race, spellName) then
                         local spellInfo = {
                             name = spellName,
                             cd = spellData.cd,
@@ -131,8 +131,8 @@ function Spells:CollectSpellsForGUID(guid, unitData)
         end
     end
 
-    if RAT.State.inspectedTrinkets and RAT.State.inspectedTrinkets[guid] then
-        local trinkets = RAT.State.inspectedTrinkets[guid]
+    local trinkets = RAT.StateHelpers:GetInspectedTrinkets(guid)
+    if trinkets then
         for _, trinketData in ipairs(trinkets) do
             local trinketCD = trinketData.cooldown or 120
 
@@ -157,8 +157,8 @@ function Spells:CollectSpellsForGUID(guid, unitData)
         end
     end
 
-    if RAT.State.inspectedMysticEnchants and RAT.State.inspectedMysticEnchants[guid] then
-        local mysticEnchants = RAT.State.inspectedMysticEnchants[guid]
+    local mysticEnchants = RAT.StateHelpers:GetInspectedMysticEnchants(guid)
+    if mysticEnchants then
         for _, enchantData in ipairs(mysticEnchants) do
             local spellID, spellName, cooldown, spellType, enchantID = unpack(enchantData)
 
@@ -206,7 +206,7 @@ end
 -- @param guid string Unit GUID
 -- @param filterType string|nil Optional type filter ("cc", "interrupt", "external")
 -- @return table Array of spell info tables
-function Spells:GetSpellsForGUID(guid, filterType)
+function SpellManager:GetSpellsForGUID(guid, filterType)
     local cached = unitSpells[guid]
     if not cached then
         return {}
@@ -222,7 +222,7 @@ end
 --- Get spells for all units, optionally filtered by type
 -- @param filterType string|nil Optional type filter ("cc", "interrupt", "external")
 -- @return table Array of spell info tables from all units
-function Spells:GetAllSpells(filterType)
+function SpellManager:GetAllSpells(filterType)
     local allSpells = {}
 
     for guid, spellData in pairs(unitSpells) do
@@ -239,7 +239,7 @@ end
 
 --- Get grouped spells (all types)
 -- @return table {cc = {...}, interrupt = {...}, external = {...}}
-function Spells:GetGroupedSpells()
+function SpellManager:GetGroupedSpells()
     return {
         cc = self:GetAllSpells("cc"),
         interrupt = self:GetAllSpells("interrupt"),
@@ -251,7 +251,7 @@ end
 -- @param guid string Unit GUID
 -- @param spellName string Spell name
 -- @return boolean True if unit has the spell
-function Spells:GUIDHasSpell(guid, spellName)
+function SpellManager:GUIDHasSpell(guid, spellName)
     local cached = unitSpells[guid]
     if not cached or not cached.all then
         return false
@@ -268,7 +268,7 @@ end
 
 --- Get count of tracked units
 -- @return number Number of units with spell data
-function Spells:GetUnitCount()
+function SpellManager:GetUnitCount()
     local count = 0
     for _ in pairs(unitSpells) do
         count = count + 1
@@ -277,7 +277,7 @@ function Spells:GetUnitCount()
 end
 
 --- Invalidate spell cache (forces rebuild on next access)
-function Spells:InvalidateCache()
+function SpellManager:InvalidateCache()
     RAT:DebugPrint("Spells cache invalidated")
     wipe(unitSpells)
 end
@@ -285,7 +285,7 @@ end
 --- Get all spells that can appear in a specific group, organized by source (for filter UI)
 -- @param groupType string Group type ("party", "cc", "interrupt", "external", "trinket")
 -- @return table Organized spell data {classes = {WARRIOR = {spells}, ...}, races = {Human = {spells}, ...}, trinkets = {spells}}
-function Spells:GetAllSpellsForGroup(groupType)
+function SpellManager:GetAllSpellsForGroup(groupType)
     local result = {
         classes = {},
         races = {},
@@ -298,7 +298,7 @@ function Spells:GetAllSpellsForGroup(groupType)
     end
 
     if groupType == "party" then
-        for _, class in ipairs({"WARRIOR", "PALADIN", "HUNTER", "ROGUE", "PRIEST", "DEATHKNIGHT", "SHAMAN", "MAGE", "WARLOCK", "DRUID"}) do
+        for _, class in ipairs(RAT.Constants.CLASSES) do
             local classSpells = RAT.Data:GetSpellsByClass(class)
             if classSpells and #classSpells > 0 then
                 result.classes[class] = {}
@@ -309,7 +309,7 @@ function Spells:GetAllSpellsForGroup(groupType)
             end
         end
 
-        for _, race in ipairs({"Human", "Dwarf", "NightElf", "Gnome", "Draenei", "Orc", "Undead", "Tauren", "Troll", "BloodElf"}) do
+        for _, race in ipairs(RAT.Constants.RACES) do
             local raceSpells = RAT.Data:GetSpellsByRace(race)
             if raceSpells and #raceSpells > 0 then
                 result.races[race] = {}
@@ -352,7 +352,7 @@ function Spells:GetAllSpellsForGroup(groupType)
             end
         end
     else
-        for _, class in ipairs({"WARRIOR", "PALADIN", "HUNTER", "ROGUE", "PRIEST", "DEATHKNIGHT", "SHAMAN", "MAGE", "WARLOCK", "DRUID"}) do
+        for _, class in ipairs(RAT.Constants.CLASSES) do
             local classSpells = RAT.Data:GetSpellsByClass(class)
             if classSpells then
                 for _, spellName in ipairs(classSpells) do
@@ -370,7 +370,7 @@ function Spells:GetAllSpellsForGroup(groupType)
             end
         end
 
-        for _, race in ipairs({"Human", "Dwarf", "NightElf", "Gnome", "Draenei", "Orc", "Undead", "Tauren", "Troll", "BloodElf"}) do
+        for _, race in ipairs(RAT.Constants.RACES) do
             local raceSpells = RAT.Data:GetSpellsByRace(race)
             if raceSpells then
                 for _, spellName in ipairs(raceSpells) do

@@ -1,29 +1,29 @@
--- Modules/ExtraSpells.lua
+-- Modules/Display/ExtraSpellsDisplay.lua
 -- Handles extra spell icon displays (categorized by type: cc, interrupt, external, trinket)
 -- These are shown on separate "group anchors" independent of per-unit displays
 
 local RAT = _G.RAT
-RAT.ExtraSpells = {}
+RAT.ExtraSpellsDisplay = {}
 
-local ExtraSpells = RAT.ExtraSpells
+local ExtraSpellsDisplay = RAT.ExtraSpellsDisplay
 
-function ExtraSpells:Initialize()
+function ExtraSpellsDisplay:Initialize()
 end
 
 --------------------------------------------------------------------------------
 -- Icon Updates
 --------------------------------------------------------------------------------
 
-function ExtraSpells:UpdateExtraSpells()
-    RAT.Anchors:UpdateGroupAnchorsVisibility()
+function ExtraSpellsDisplay:UpdateExtraSpells()
+    RAT.AnchorDisplay:UpdateGroupAnchorsVisibility()
 
     local groupedSpells = {}
-    if RAT.Spells then
-        groupedSpells = RAT.Spells:GetGroupedSpells()
+    if RAT.SpellManager then
+        groupedSpells = RAT.SpellManager:GetGroupedSpells()
     end
 
     for groupType, spells in pairs(groupedSpells) do
-        local anchor = RAT.Anchors:GetGroupAnchor(groupType)
+        local anchor = RAT.AnchorDisplay:GetGroupAnchor(groupType)
         if anchor and (groupType == "cc" and RAT.db.profile.groupAnchors.showCC or
                       groupType == "interrupt" and RAT.db.profile.groupAnchors.showInterrupt or
                       groupType == "external" and RAT.db.profile.groupAnchors.showExternal or
@@ -31,13 +31,13 @@ function ExtraSpells:UpdateExtraSpells()
 
             local filteredSpells = {}
             for _, spellInfo in ipairs(spells) do
-                if RAT.IconHelpers:IsSpellEnabledForGroup(groupType, spellInfo.name) then
+                if RAT:IsSpellEnabledForGroup(groupType, spellInfo.name) then
                     table.insert(filteredSpells, spellInfo)
                 end
             end
 
-            if groupType == "interrupt" and RAT.InterruptBars then
-                RAT.InterruptBars:UpdateBars(filteredSpells)
+            if groupType == "interrupt" and RAT.InterruptBarDisplay then
+                RAT.InterruptBarDisplay:UpdateBars(filteredSpells)
             else
                 self:UpdateGroupAnchorIcons(groupType, filteredSpells)
             end
@@ -48,23 +48,23 @@ end
 --- Update icons for an extra spell display anchor
 -- @param groupType string Group type ("cc", "interrupt", "external", "trinket")
 -- @param spells table Array of {name, cd, spellData, guid, unit} tables
-function ExtraSpells:UpdateGroupAnchorIcons(groupType, spells)
-    local anchor = RAT.Anchors:GetGroupAnchor(groupType)
+function ExtraSpellsDisplay:UpdateGroupAnchorIcons(groupType, spells)
+    local anchor = RAT.AnchorDisplay:GetGroupAnchor(groupType)
     if not anchor then return end
 
     if not anchor.icons then
         anchor.icons = {}
     end
 
-    local spellListChanged = RAT.IconHelpers:HasSpellListChanged(anchor, spells, true)
+    local spellListChanged = RAT.IconManager:HasSpellListChanged(anchor, spells, true)
 
     -- If spell list changed, recreate icons
     if spellListChanged then
         RAT:DebugPrint(string.format("Spell list changed for %s group - recreating icons", groupType))
-        RAT.IconHelpers:ReleaseAllIcons(anchor)
+        RAT.IconManager:ReleaseAllIcons(anchor)
     else
         -- Spell list unchanged - just update cooldown states in-place
-        RAT.IconHelpers:UpdateIconsCooldownState(anchor, spells, nil)
+        RAT.IconManager:UpdateIconsCooldownState(anchor, spells, nil)
         return
     end
 
@@ -85,7 +85,7 @@ function ExtraSpells:UpdateGroupAnchorIcons(groupType, spells)
     local growth = groupSettings.growth or "RIGHT"
 
     for i, spellInfo in ipairs(spells) do
-        local icon = RAT.Icons:AcquireIcon()
+        local icon = RAT.IconManager:AcquireIcon()
 
         icon.spellName = spellInfo.name
         icon.spellID = spellInfo.spellData.id
@@ -113,10 +113,10 @@ function ExtraSpells:UpdateGroupAnchorIcons(groupType, spells)
             icon.unitNameText:Hide()
         end
 
-        RAT.IconHelpers:SetSpellTexture(icon, spellInfo.name, spellInfo.spellData)
+        RAT.IconFactory:SetIconTexture(icon, spellInfo.name, spellInfo.spellData)
 
         local point, relPoint, xOff, yOff, isNewRow =
-            RAT.IconHelpers:CalculateIconPosition(i, growth, iconsPerRow, spacing)
+            RAT.PositioningHelpers:CalculateIconPosition(i, growth, iconsPerRow, spacing)
 
         if i == 1 then
             icon:SetPoint(point, anchor, relPoint, xOff, yOff)
@@ -130,9 +130,9 @@ function ExtraSpells:UpdateGroupAnchorIcons(groupType, spells)
 
         icon:SetScale(scale)
 
-        RAT.IconHelpers:ApplyCooldownState(icon, spellInfo.guid, spellInfo.name,
-            function(obj, start, dur) RAT.Icons:StartIconCooldown(obj, start, dur) end,
-            function(obj) RAT.Icons:SetIconReady(obj) end
+        RAT.IconManager:ApplyCooldownState(icon, spellInfo.guid, spellInfo.name,
+            function(obj, start, dur) RAT.IconManager:StartIconCooldown(obj, start, dur) end,
+            function(obj) RAT.IconManager:SetIconReady(obj) end
         )
 
         icon:Show()
@@ -143,26 +143,26 @@ end
 
 --- Hide icons for an extra spell display anchor
 -- @param groupType string Group type
-function ExtraSpells:HideGroupAnchorIcons(groupType)
-    local anchor = RAT.Anchors:GetGroupAnchor(groupType)
+function ExtraSpellsDisplay:HideGroupAnchorIcons(groupType)
+    local anchor = RAT.AnchorDisplay:GetGroupAnchor(groupType)
     if not anchor then return end
 
-    RAT.IconHelpers:ReleaseAllIcons(anchor)
+    RAT.IconManager:ReleaseAllIcons(anchor)
 end
 
 --- Refresh cooldown display for a specific spell (without recreating icons)
 -- @param guid string Player GUID whose spells to update
 -- @param spellName string Spell name to update
-function ExtraSpells:RefreshCooldownForSpell(guid, spellName)
+function ExtraSpellsDisplay:RefreshCooldownForSpell(guid, spellName)
     local groupTypes = {"cc", "external"}
     for _, groupType in ipairs(groupTypes) do
-        local anchor = RAT.Anchors:GetGroupAnchor(groupType)
+        local anchor = RAT.AnchorDisplay:GetGroupAnchor(groupType)
         if anchor and anchor.icons then
             for _, icon in ipairs(anchor.icons) do
                 if icon.guid == guid and icon.spellName == spellName then
-                    RAT.IconHelpers:ApplyCooldownState(icon, guid, spellName,
-                        function(obj, start, dur) RAT.Icons:StartIconCooldown(obj, start, dur) end,
-                        function(obj) RAT.Icons:SetIconReady(obj) end
+                    RAT.IconManager:ApplyCooldownState(icon, guid, spellName,
+                        function(obj, start, dur) RAT.IconManager:StartIconCooldown(obj, start, dur) end,
+                        function(obj) RAT.IconManager:SetIconReady(obj) end
                     )
                 end
             end

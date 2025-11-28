@@ -1,4 +1,4 @@
--- Modules/Comm.lua
+-- Modules/Communication/CommManager.lua
 -- Handles addon communication for sharing builds with party members
 --
 -- ARCHITECTURE:
@@ -12,9 +12,9 @@
 -- - BODY: Build data
 
 local RAT = _G.RAT
-RAT.Comm = {}
+RAT.CommManager = {}
 
-local Comm = RAT.Comm
+local CommManager = RAT.CommManager
 
 local COMM_PREFIX = "RATv1"
 
@@ -28,7 +28,7 @@ local MSG_TYPE = {
 
 local BROADCAST_RECIPIENT = "*"
 
-function Comm:Initialize()
+function CommManager:Initialize()
     RAT:RegisterComm(COMM_PREFIX, "OnCommReceived")
 
     RAT:DebugPrint("Comm: Initialized addon communication system (addressed broadcast)")
@@ -70,7 +70,7 @@ local function SendMessage(msgType, recipientGUID, buildData)
     RAT:DebugPrint(string.format("Comm: Sent %s to %s via %s", msgType, targetStr, channel))
 end
 
-function Comm:BroadcastBuild()
+function CommManager:BroadcastBuild()
     local guid = UnitGUID("player")
     if not guid then return end
 
@@ -98,7 +98,7 @@ function Comm:BroadcastBuild()
         talentCount, #trinkets, #mysticEnchants))
 end
 
-function Comm:RequestBuilds()
+function CommManager:RequestBuilds()
     if not IsInRaid() and not IsInGroup() then
         RAT:DebugPrint("Comm: Not in group, skipping REQ broadcast")
         return
@@ -143,7 +143,7 @@ function Comm:RequestBuilds()
 end
 
 --- Send desync notification to party
-function Comm:SendDesync()
+function CommManager:SendDesync()
     SendMessage(MSG_TYPE.DESYNC, BROADCAST_RECIPIENT, nil)
     RAT:DebugPrint("Comm: Sent DESYNC notification")
 end
@@ -199,7 +199,7 @@ end
 -- @param senderGUID string Sender's GUID
 -- @param body string Serialized build data
 -- @param sender string Sender name
-function Comm:OnSyncReceived(senderGUID, body, sender)
+function CommManager:OnSyncReceived(senderGUID, body, sender)
     local buildData = self:DeserializeAndStore(senderGUID, body, sender)
     if buildData then
         -- Mark as synced
@@ -211,7 +211,7 @@ end
 -- @param senderGUID string Sender's GUID
 -- @param body string Serialized build data
 -- @param sender string Sender name
-function Comm:OnReqReceived(senderGUID, body, sender)
+function CommManager:OnReqReceived(senderGUID, body, sender)
     local buildData = self:DeserializeAndStore(senderGUID, body, sender)
     if not buildData then return end
 
@@ -242,7 +242,7 @@ end
 -- @param senderGUID string Sender's GUID
 -- @param body string Serialized build data
 -- @param sender string Sender name
-function Comm:OnRespReceived(senderGUID, body, sender)
+function CommManager:OnRespReceived(senderGUID, body, sender)
     local buildData = self:DeserializeAndStore(senderGUID, body, sender)
     if buildData then
         RAT.State.syncedPartyMembers[senderGUID] = true
@@ -252,7 +252,7 @@ end
 --- Handle DESYNC message (player leaving or resetting build)
 -- @param senderGUID string Sender's GUID
 -- @param sender string Sender name
-function Comm:OnDesyncReceived(senderGUID, sender)
+function CommManager:OnDesyncReceived(senderGUID, sender)
     RAT:DebugPrint(string.format("Comm: %s desynced, clearing build data", sender))
 
     RAT.State.syncedPartyMembers[senderGUID] = nil
@@ -267,8 +267,8 @@ function Comm:OnDesyncReceived(senderGUID, sender)
         RAT.State.inspectedMysticEnchants[senderGUID] = nil
     end
 
-    if RAT.Icons then
-        RAT.Icons:RefreshAllDisplays()
+    if RAT.IconManager then
+        RAT.IconManager:RefreshAllDisplays()
     end
 end
 
@@ -281,7 +281,7 @@ end
 -- @param body string Serialized build data
 -- @param sender string Sender name
 -- @return table|nil Deserialized build data or nil on error
-function Comm:DeserializeAndStore(senderGUID, body, sender)
+function CommManager:DeserializeAndStore(senderGUID, body, sender)
     local success, buildData = RAT:Deserialize(body)
     if not success or type(buildData) ~= "table" then
         RAT:DebugPrint(string.format("Comm: Failed to deserialize from %s", sender))
@@ -313,18 +313,18 @@ function Comm:DeserializeAndStore(senderGUID, body, sender)
     end
     RAT.State.inspectedMysticEnchants[senderGUID] = mysticEnchants
 
-    if RAT.Spells and RAT.Units then
-        local trackedUnits = RAT.Units:GetAllUnits()
+    if RAT.SpellManager and RAT.UnitsManager then
+        local trackedUnits = RAT.UnitsManager:GetAllUnits()
         for unitGuid, unitData in pairs(trackedUnits) do
             if unitGuid == senderGUID then
-                RAT.Spells:UpdateUnitSpells(senderGUID, unitData)
+                RAT.SpellManager:UpdateUnitSpells(senderGUID, unitData)
                 break
             end
         end
     end
 
-    if RAT.Icons then
-        RAT.Icons:RefreshAllDisplays()
+    if RAT.IconManager then
+        RAT.IconManager:RefreshAllDisplays()
     end
 
     return buildData

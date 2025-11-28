@@ -1,10 +1,10 @@
--- Modules/Units.lua
+-- Modules/Manager/UnitsManager.lua
 -- Centralized unit tracking module
 -- Tracks player, party members, and raid members independent of UI frames
 
 local RAT = _G.RAT
 local Units = {}
-RAT.Units = Units
+RAT.UnitsManager = Units
 
 --------------------------------------------------------------------------------
 -- State

@@ -44,36 +44,36 @@ function RAT:OnEnable()
     self:RegisterEvent("UNIT_SPELLCAST_SUCCEEDED", "OnSpellCastSucceeded")
     self:RegisterEvent("UNIT_INVENTORY_CHANGED", "OnInventoryChanged")
 
-    if self.Units then
-        self.Units:Initialize()
+    if self.UnitsManager then
+        self.UnitsManager:Initialize()
     end
 
-    if self.Comm then
-        self.Comm:Initialize()
+    if self.CommManager then
+        self.CommManager:Initialize()
     end
 
-    if self.Inspection then
-        self.Inspection:Initialize()
+    if self.InspectionManager then
+        self.InspectionManager:Initialize()
     end
 
-    if self.Spells then
-        self.Spells:Initialize()
+    if self.SpellManager then
+        self.SpellManager:Initialize()
     end
 
-    if self.Icons then
-        self.Icons:Initialize()
+    if self.IconManager then
+        self.IconManager:Initialize()
     end
 
-    if self.Tracker then
-        self.Tracker:Initialize()
+    if self.TrackerManager then
+        self.TrackerManager:Initialize()
     end
 
     self:SetupOptions()
 
     self.State.isInitialized = true
 
-    if self.Inspection then
-        self.Inspection:InspectPlayer()
+    if self.InspectionManager then
+        self.InspectionManager:InspectPlayer()
     end
 
     self:ScheduleTimer("register_talent_events", 0.5, function()
@@ -86,8 +86,8 @@ function RAT:OnEnable()
 end
 
 function RAT:OnDisable()
-    if self.Icons then
-        self.Icons:HideAll()
+    if self.IconManager then
+        self.IconManager:HideAll()
     end
 
     -- Clear state
@@ -123,13 +123,13 @@ function RAT:OnPartyChanged()
     if not self.State.isInitialized then return end
 
     -- Update centralized unit tracking
-    if self.Units then
-        self.Units:Update()
+    if self.UnitsManager then
+        self.UnitsManager:Update()
     end
 
     -- Update spell cache for all tracked units
-    if self.Spells then
-        self.Spells:UpdateAllUnitSpells()
+    if self.SpellManager then
+        self.SpellManager:UpdateAllUnitSpells()
     end
 
     -- Check if we're in test mode
@@ -138,16 +138,16 @@ function RAT:OnPartyChanged()
     -- Check if we're in a raid group
     local numRaid = GetNumRaidMembers()
     if numRaid > 0 then
-        if self.Icons then
+        if self.IconManager then
             for i = 1, 5 do
-                self.Icons:HideAnchorIcons(i)
+                self.IconManager:HideAnchorIcons(i)
             end
         end
 
         wipe(self.State.partyAnchors)
 
-        if self.Icons then
-            self.Icons:RefreshAllDisplays()
+        if self.IconManager then
+            self.IconManager:RefreshAllDisplays()
         end
 
         return
@@ -156,9 +156,9 @@ function RAT:OnPartyChanged()
     local numParty = GetNumPartyMembers()
 
     -- Hide all current icons before clearing anchors
-    if self.Icons then
+    if self.IconManager then
         for i = 1, 5 do
-            self.Icons:HideAnchorIcons(i)
+            self.IconManager:HideAnchorIcons(i)
         end
     end
 
@@ -166,8 +166,8 @@ function RAT:OnPartyChanged()
 
     -- If not in a party and not in test mode, stop here
     if numParty == 0 and not inTestMode then
-        if self.Icons then
-            self.Icons:RefreshAllDisplays()
+        if self.IconManager then
+            self.IconManager:RefreshAllDisplays()
         end
         return
     end
@@ -219,22 +219,22 @@ function RAT:OnPartyChanged()
     -- ElvUI needs a moment to update its frames when party composition changes
     -- OmniCD uses 0.4s delay for this, which seems to work reliably
     self:ScheduleTimer("party_update_delay", 0.4, function()
-        if RAT.Icons then
-            RAT.Icons:PositionAnchors()
+        if RAT.IconManager then
+            RAT.IconManager:PositionAnchors()
         end
 
-        if RAT.Icons then
-            RAT.Icons:RefreshAllDisplays()
+        if RAT.IconManager then
+            RAT.IconManager:RefreshAllDisplays()
         end
 
         -- Inspect self and request builds from party
         RAT:ScheduleTimer("party_comm_delay", 0.6, function()
-            if RAT.Inspection then
-                RAT.Inspection:InspectPlayer()
+            if RAT.InspectionManager then
+                RAT.InspectionManager:InspectPlayer()
             end
 
-            if RAT.Comm then
-                RAT.Comm:RequestBuilds()
+            if RAT.CommManager then
+                RAT.CommManager:RequestBuilds()
             end
         end)
     end)
@@ -244,8 +244,8 @@ function RAT:OnPlayerEnteringWorld()
     local instanceType = select(2, IsInInstance())
     if instanceType == "arena" then
         wipe(self.State.activeGUIDs)
-        if self.Icons then
-            self.Icons:StopAllCooldowns()
+        if self.IconManager then
+            self.IconManager:StopAllCooldowns()
         end
     end
 
@@ -255,8 +255,8 @@ function RAT:OnPlayerEnteringWorld()
 end
 
 function RAT:OnPlayerLeavingWorld()
-    if self.Comm then
-        self.Comm:SendDesync()
+    if self.CommManager then
+        self.CommManager:SendDesync()
     end
 end
 
@@ -265,19 +265,19 @@ function RAT:OnTalentUpdate(event)
 
     self:DebugPrint(string.format("OnTalentUpdate triggered by: %s", event or "unknown"))
 
-    if self.Inspection then
+    if self.InspectionManager then
         local now = GetTime()
 
-        if self.Inspection.lastInspectionComplete then
-            local timeSinceComplete = now - self.Inspection.lastInspectionComplete
+        if self.InspectionManager.lastInspectionComplete then
+            local timeSinceComplete = now - self.InspectionManager.lastInspectionComplete
             if timeSinceComplete < 1.0 then
                 self:DebugPrint(string.format("Ignoring %s event %.1fs after inspection completion (cascading event)", event or "talent", timeSinceComplete))
                 return
             end
         end
 
-        if self.Inspection.GetLastInspectTime then
-            local lastStart = self.Inspection:GetLastInspectTime()
+        if self.InspectionManager.GetLastInspectTime then
+            local lastStart = self.InspectionManager:GetLastInspectTime()
             if lastStart and lastStart > 0 then
                 local timeSinceStart = now - lastStart
                 if timeSinceStart < 0.5 then
@@ -295,8 +295,8 @@ function RAT:OnTalentUpdate(event)
     self:ScheduleTimer("talent_update_debounce", 0.3, function()
         self:DebugPrint(string.format("Talent update detected (%s), re-inspecting and broadcasting", event or "unknown"))
 
-        if self.Inspection then
-            self.Inspection:InspectPlayer()
+        if self.InspectionManager then
+            self.InspectionManager:InspectPlayer()
         end
 
         if self.timers and self.timers["talent_update_broadcast"] then
@@ -304,22 +304,22 @@ function RAT:OnTalentUpdate(event)
         end
 
         self:ScheduleTimer("talent_update_broadcast", 0.2, function()
-            if self.Comm then
-                self.Comm:BroadcastBuild()
+            if self.CommManager then
+                self.CommManager:BroadcastBuild()
             end
         end)
     end)
 end
 
 function RAT:OnSpellCastSucceeded(event, unit, spellName)
-    if not self.Units or not self.Units:GetUnitByID(unit) then
+    if not self.UnitsManager or not self.UnitsManager:GetUnitByID(unit) then
         return
     end
 
     self:DebugPrint(string.format("Spell cast: %s by %s", tostring(spellName), tostring(unit)))
 
-    if self.Tracker then
-        self.Tracker:OnAbilityUsed(unit, spellName)
+    if self.TrackerManager then
+        self.TrackerManager:OnAbilityUsed(unit, spellName)
     end
 end
 
@@ -338,8 +338,8 @@ function RAT:OnInventoryChanged(event, unit)
 
             self:DebugPrint("Equipment change debounce complete, re-inspecting player")
 
-            if self.Inspection then
-                self.Inspection:InspectPlayer()
+            if self.InspectionManager then
+                self.InspectionManager:InspectPlayer()
             end
 
             if self.timers and self.timers["equipment_change_broadcast"] then
@@ -347,8 +347,8 @@ function RAT:OnInventoryChanged(event, unit)
             end
 
             self:ScheduleTimer("equipment_change_broadcast", 0.3, function()
-                if self.Comm then
-                    self.Comm:BroadcastBuild()
+                if self.CommManager then
+                    self.CommManager:BroadcastBuild()
                 end
             end)
         end)

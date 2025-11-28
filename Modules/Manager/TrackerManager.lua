@@ -1,12 +1,12 @@
--- Modules/Tracker.lua
+-- Modules/Manager/TrackerManager.lua
 -- Handles cooldown tracking logic
 
 local RAT = _G.RAT
-RAT.Tracker = {}
+RAT.TrackerManager = {}
 
-local Tracker = RAT.Tracker
+local TrackerManager = RAT.TrackerManager
 
-function Tracker:Initialize()
+function TrackerManager:Initialize()
 end
 
 --------------------------------------------------------------------------------
@@ -16,10 +16,10 @@ end
 --- Called when a party member or player uses an ability
 -- @param unit string Unit ID (e.g., "party1", "party2", "player")
 -- @param spellName string Name of the spell cast
-function Tracker:OnAbilityUsed(unit, spellName)
+function TrackerManager:OnAbilityUsed(unit, spellName)
     if not spellName or spellName == "" then return end
 
-    local unitData = RAT.Units and RAT.Units:GetUnitByID(unit)
+    local unitData = RAT.UnitsManager and RAT.UnitsManager:GetUnitByID(unit)
     if not unitData then
         RAT:DebugPrint("Unit not tracked: " .. tostring(unit))
         return
@@ -76,7 +76,7 @@ function Tracker:OnAbilityUsed(unit, spellName)
     RAT:DebugPrint(string.format("%s used %s (CD: %ds, Type: %s)", unit, spellName, spellData.cd, spellData.type))
 
     if spellData.spec == true then
-        if RAT.Inspection and not RAT.Inspection:GUIDHasTalent(guid, spellName) then
+        if RAT.InspectionManager and not RAT.InspectionManager:GUIDHasTalent(guid, spellName) then
             RAT:DebugPrint(spellName .. " is a talent but player doesn't have it")
             return
         end
@@ -88,17 +88,16 @@ function Tracker:OnAbilityUsed(unit, spellName)
     self:HandleGroupedCooldowns(guid, class, spellName, cooldown)
     self:HandleCooldownResetters(guid, spellName)
 
-    if anchorIndex and RAT.Icons then
-        RAT.Icons:UpdateAnchorIcons(anchorIndex)
+    if anchorIndex and RAT.IconManager then
+        RAT.IconManager:UpdateAnchorIcons(anchorIndex)
     end
 
-    if RAT.ExtraSpells then
-        local spellData = RAT.Data:GetSpellData(spellName)
+    if RAT.ExtraSpellsDisplay then
+        RAT.ExtraSpellsDisplay:RefreshCooldownForSpell(guid, spellName)
 
-        RAT.ExtraSpells:RefreshCooldownForSpell(guid, spellName)
-
-        if spellData and spellData.type == "interrupt" and RAT.InterruptBars then
-            RAT.InterruptBars:UpdateBarCooldownState(guid, spellName)
+        -- Use the spellData we already have (includes mystic enchants, trinkets, etc.)
+        if spellData and spellData.type == "interrupt" and RAT.InterruptBarDisplay then
+            RAT.InterruptBarDisplay:UpdateBarCooldownState(guid, spellName)
         end
     end
 end
@@ -111,17 +110,10 @@ end
 -- @param anchor table Party anchor data
 -- @param spellName string Name of the spell
 -- @param cooldown number Cooldown duration in seconds
-function Tracker:StartCooldown(guid, spellName, cooldown)
+function TrackerManager:StartCooldown(guid, spellName, cooldown)
     if not guid then return end
 
-    if not RAT.State.activeGUIDs[guid] then
-        RAT.State.activeGUIDs[guid] = {}
-    end
-
-    RAT.State.activeGUIDs[guid][spellName] = {
-        startTime = GetTime(),
-        cooldown = cooldown,
-    }
+    RAT.StateHelpers:SetActiveCooldown(guid, spellName, GetTime(), cooldown)
 
     RAT:DebugPrint(string.format("Started CD: %s (%.1fs)", spellName, cooldown))
 end
@@ -130,10 +122,8 @@ end
 -- @param guid string Player GUID
 -- @param spellName string Name of the spell
 -- @param reason string Optional reason for stopping (e.g., "expired", "reset")
-function Tracker:StopCooldown(guid, spellName, reason)
-    if not RAT.State.activeGUIDs[guid] then return end
-
-    RAT.State.activeGUIDs[guid][spellName] = nil
+function TrackerManager:StopCooldown(guid, spellName, reason)
+    RAT.StateHelpers:ClearActiveCooldown(guid, spellName)
     if reason then
         RAT:DebugPrint(string.format("Stopped CD: %s (%s)", spellName, reason))
     else
@@ -146,12 +136,9 @@ end
 -- @param spellName string Name of the spell
 -- @return boolean True if on cooldown
 -- @return number|nil Time remaining (if on cooldown)
-function Tracker:IsOnCooldown(guid, spellName)
-    if not RAT.State.activeGUIDs[guid] then
-        return false, nil
-    end
-
-    local cdInfo = RAT.State.activeGUIDs[guid][spellName]
+function TrackerManager:IsOnCooldown(guid, spellName)
+    local activeCDs = RAT.StateHelpers:GetActiveCooldowns(guid)
+    local cdInfo = activeCDs[spellName]
     if not cdInfo then
         return false, nil
     end
@@ -170,12 +157,9 @@ end
 -- @param guid string Player GUID
 -- @param spellName string Name of the spell
 -- @return table|nil Cooldown info {startTime, duration} or nil
-function Tracker:GetCooldownInfo(guid, spellName)
-    if not RAT.State.activeGUIDs[guid] then
-        return nil
-    end
-
-    local cdInfo = RAT.State.activeGUIDs[guid][spellName]
+function TrackerManager:GetCooldownInfo(guid, spellName)
+    local activeCDs = RAT.StateHelpers:GetActiveCooldowns(guid)
+    local cdInfo = activeCDs[spellName]
     if not cdInfo then
         return nil
     end
@@ -201,7 +185,7 @@ end
 -- @param class string Player class
 -- @param spellName string Name of the spell cast
 -- @param cooldown number Cooldown duration
-function Tracker:HandleGroupedCooldowns(guid, class, spellName, cooldown)
+function TrackerManager:HandleGroupedCooldowns(guid, class, spellName, cooldown)
     local group = RAT.Data:GetSharedGroup(class, spellName)
     if not group then
         return
@@ -224,7 +208,7 @@ end
 --- Handle abilities that reset other cooldowns
 -- @param guid string Player GUID
 -- @param spellName string Name of the spell cast
-function Tracker:HandleCooldownResetters(guid, spellName)
+function TrackerManager:HandleCooldownResetters(guid, spellName)
     local resetsTable = RAT.Data:GetResetTargets(spellName)
     if not resetsTable then
         return
@@ -247,14 +231,14 @@ end
 --------------------------------------------------------------------------------
 
 --- Stop all cooldowns
-function Tracker:StopAllCooldowns()
+function TrackerManager:StopAllCooldowns()
     RAT:DebugPrint("Stopping all cooldowns")
     wipe(RAT.State.activeGUIDs)
 end
 
 --- Stop cooldowns for a specific GUID
 -- @param guid string Player GUID
-function Tracker:StopCooldownsForGUID(guid)
+function TrackerManager:StopCooldownsForGUID(guid)
     if RAT.State.activeGUIDs[guid] then
         RAT:DebugPrint("Stopping cooldowns for GUID: " .. guid)
         RAT.State.activeGUIDs[guid] = nil

@@ -1,10 +1,10 @@
--- Modules/Inspection.lua
+-- Modules/Manager/InspectionManager.lua
 -- Handles player self-inspection for talents and trinkets
 
 local RAT = _G.RAT
-RAT.Inspection = {}
+RAT.InspectionManager = {}
 
-local Inspection = RAT.Inspection
+local InspectionManager = RAT.InspectionManager
 
 local hasAscensionAPI = C_CharacterAdvancement ~= nil
 
@@ -19,7 +19,7 @@ local lastInspectTime = 0
 -- Initialization
 --------------------------------------------------------------------------------
 
-function Inspection:Initialize()
+function InspectionManager:Initialize()
     if hasAscensionAPI then
         RAT:DebugPrint("C_CharacterAdvancement - using for player talent inspection")
     else
@@ -29,12 +29,16 @@ function Inspection:Initialize()
     if not inspectionFrame then
         inspectionFrame = CreateFrame("Frame")
         inspectionFrame:SetScript("OnEvent", function(self, event, ...)
-            Inspection:OnInspectReady(...)
+            InspectionManager:OnInspectReady(...)
         end)
         inspectionFrame:RegisterEvent("INSPECT_READY")
     end
 
     RAT:DebugPrint("Inspection: Player self-inspection enabled, party members use addon comm")
+end
+
+function InspectionManager:GetLastInspectTime()
+    return lastInspectTime
 end
 
 --------------------------------------------------------------------------------
@@ -43,11 +47,7 @@ end
 
 --- Inspect the player (self-inspection)
 -- Collects talents and trinkets and stores them in RAT.State, caller is still responsible for broadcasting via Comm
-function Inspection:GetLastInspectTime()
-    return lastInspectTime
-end
-
-function Inspection:InspectPlayer()
+function InspectionManager:InspectPlayer()
     if not UnitExists("player") then
         return
     end
@@ -70,7 +70,7 @@ function Inspection:InspectPlayer()
             elapsed = elapsed + delta
             if elapsed >= 0.2 then
                 self:SetScript("OnUpdate", nil)
-                Inspection:ProcessAscensionInspection()
+                InspectionManager:ProcessAscensionInspection()
             end
         end)
     end
@@ -78,7 +78,7 @@ function Inspection:InspectPlayer()
     self:InspectPlayerTrinkets()
 end
 
-function Inspection:ProcessAscensionInspection()
+function InspectionManager:ProcessAscensionInspection()
     local guid = UnitGUID("player")
     if not guid then
         RAT:DebugPrint("ProcessAscensionInspection: could not get player GUID")
@@ -129,33 +129,27 @@ function Inspection:ProcessAscensionInspection()
 
     RAT:DebugPrint(string.format("ProcessAscensionInspection: found %d unique talent spells", talentCount))
 
-    if not RAT.State.inspectedTalents then
-        RAT.State.inspectedTalents = {}
-    end
-    RAT.State.inspectedTalents[guid] = talentSpells
+    RAT.StateHelpers:SetInspectedTalents(guid, talentSpells)
 
     local playerGUID = UnitGUID("player")
     if guid == playerGUID then
         local mysticEnchants = self:GetMysticEnchants("player")
-        if not RAT.State.inspectedMysticEnchants then
-            RAT.State.inspectedMysticEnchants = {}
-        end
-        RAT.State.inspectedMysticEnchants[guid] = mysticEnchants
+        RAT.StateHelpers:SetInspectedMysticEnchants(guid, mysticEnchants)
         RAT:DebugPrint(string.format("Stored %d mystic enchants for player", #mysticEnchants))
     end
 
-    if RAT.Spells and RAT.Spells.UpdateAllUnitSpells then
-        RAT.Spells:UpdateAllUnitSpells()
+    if RAT.SpellManager and RAT.SpellManager.UpdateAllUnitSpells then
+        RAT.SpellManager:UpdateAllUnitSpells()
     end
 
-    if RAT.Icons then
-        RAT.Icons:RefreshAllDisplays()
+    if RAT.IconManager then
+        RAT.IconManager:RefreshAllDisplays()
     end
 
     self.lastInspectionComplete = GetTime()
 end
 
-function Inspection:InspectPlayerTrinkets()
+function InspectionManager:InspectPlayerTrinkets()
     local guid = UnitGUID("player")
     if not guid then
         RAT:DebugPrint("InspectPlayerTrinkets: could not get player GUID")
@@ -169,17 +163,14 @@ function Inspection:InspectPlayerTrinkets()
 
     RAT:DebugPrint(string.format("Inspected player: trinkets=%d", trinketCount))
 
-    if not RAT.State.inspectedTrinkets then
-        RAT.State.inspectedTrinkets = {}
-    end
-    RAT.State.inspectedTrinkets[guid] = trinkets
+    RAT.StateHelpers:SetInspectedTrinkets(guid, trinkets)
 
-    if RAT.Spells and RAT.Units then
-        local unitData = RAT.Units:GetUnitByID("player")
+    if RAT.SpellManager and RAT.UnitsManager then
+        local unitData = RAT.UnitsManager:GetUnitByID("player")
         if unitData then
-            RAT.Spells:UpdateUnitSpells(guid, unitData)
-            if RAT.Icons then
-                RAT.Icons:RefreshAllDisplays()
+            RAT.SpellManager:UpdateUnitSpells(guid, unitData)
+            if RAT.IconManager then
+                RAT.IconManager:RefreshAllDisplays()
             end
         end
     end
@@ -188,7 +179,7 @@ end
 --- Handle INSPECT_READY event
 -- Note: This may fire for traditional NotifyInspect calls
 -- @param guid string GUID of inspected unit
-function Inspection:OnInspectReady(guid)
+function InspectionManager:OnInspectReady(guid)
     if not guid then return end
 
     local playerGUID = UnitGUID("player")
@@ -210,12 +201,12 @@ function Inspection:OnInspectReady(guid)
     end
     RAT.State.inspectedTrinkets[playerGUID] = trinkets
 
-    if RAT.Spells and RAT.Units then
-        local unitData = RAT.Units:GetUnitByID("player")
+    if RAT.SpellManager and RAT.UnitsManager then
+        local unitData = RAT.UnitsManager:GetUnitByID("player")
         if unitData then
-            RAT.Spells:UpdateUnitSpells(playerGUID, unitData)
-            if RAT.Icons then
-                RAT.Icons:RefreshAllDisplays()
+            RAT.SpellManager:UpdateUnitSpells(playerGUID, unitData)
+            if RAT.IconManager then
+                RAT.IconManager:RefreshAllDisplays()
             end
         end
     end
@@ -226,7 +217,7 @@ end
 --- Get trinkets from inspected unit
 -- @param unit string Unit ID
 -- @return table Array of trinket spell data: {spellID, spellName, itemID, cooldown}
-function Inspection:GetInspectedTrinkets(unit)
+function InspectionManager:GetInspectedTrinkets(unit)
     local trinkets = {}
     for slot = 13, 14 do
         local itemLink = GetInventoryItemLink(unit, slot)
@@ -285,7 +276,7 @@ end
 -- @param unit string Unit ID (party1-party4 or player)
 -- @param spellName string Spell name to check
 -- @return boolean True if unit has the talent
-function Inspection:UnitHasTalent(unit, spellName)
+function InspectionManager:UnitHasTalent(unit, spellName)
     local guid = UnitGUID(unit)
     if not guid then return false end
 
@@ -296,7 +287,7 @@ end
 -- @param guid string Unit GUID
 -- @param spellName string Spell name to check
 -- @return boolean True if unit has the talent
-function Inspection:GUIDHasTalent(guid, spellName)
+function InspectionManager:GUIDHasTalent(guid, spellName)
     if not guid or not spellName then return false end
 
     if RAT.State.inspectedTalents and RAT.State.inspectedTalents[guid] then
@@ -310,7 +301,7 @@ end
 -- @param unit string Unit token
 --- Get mystic enchants currently applied to the given unit
 -- @return table Array of mystic enchant data: {{spellID, spellName, cooldown, type, enchantID}, ...}
-function Inspection:GetMysticEnchants(unit)
+function InspectionManager:GetMysticEnchants(unit)
     local mysticEnchants = {}
 
     if not UnitIsUnit(unit, "player") then
