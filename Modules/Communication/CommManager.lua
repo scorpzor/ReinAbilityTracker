@@ -183,13 +183,13 @@ function RAT:OnCommReceived(prefix, message, distribution, sender)
 
     -- Route to appropriate handler
     if header == MSG_TYPE.SYNC then
-        Comm:OnSyncReceived(senderGUID, body, sender)
+        CommManager:OnSyncReceived(senderGUID, body, sender)
     elseif header == MSG_TYPE.REQ then
-        Comm:OnReqReceived(senderGUID, body, sender)
+        CommManager:OnReqReceived(senderGUID, body, sender)
     elseif header == MSG_TYPE.RESP then
-        Comm:OnRespReceived(senderGUID, body, sender)
+        CommManager:OnRespReceived(senderGUID, body, sender)
     elseif header == MSG_TYPE.DESYNC then
-        Comm:OnDesyncReceived(senderGUID, sender)
+        CommManager:OnDesyncReceived(senderGUID, sender)
     else
         self:DebugPrint("Comm: Unknown message type: " .. header)
     end
