@@ -35,7 +35,7 @@ function InterruptBars:CreateBar()
     local bar = CreateFrame("Frame", nil, UIParent)
     bar:SetWidth(barWidth)
     bar:SetHeight(barHeight)
-    bar:SetFrameStrata("HIGH")
+    bar:SetFrameStrata("LOW")
 
     local border = bar:CreateTexture(nil, "BORDER")
     border:SetPoint("TOPLEFT", bar, "TOPLEFT", -1, 1)

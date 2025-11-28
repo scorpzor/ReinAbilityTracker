@@ -76,10 +76,7 @@ function Comm:BroadcastBuild()
 
     local talents = RAT.State.inspectedTalents and RAT.State.inspectedTalents[guid] or {}
     local trinkets = RAT.State.inspectedTrinkets and RAT.State.inspectedTrinkets[guid] or {}
-    local mysticEnchants = {}
-    if RAT.Inspection and RAT.Inspection.GetMysticEnchants then
-        mysticEnchants = RAT.Inspection:GetMysticEnchants("player")
-    end
+    local mysticEnchants = RAT.State.inspectedMysticEnchants and RAT.State.inspectedMysticEnchants[guid] or {}
 
     local talentCount = 0
     for _ in pairs(talents) do talentCount = talentCount + 1 end
@@ -102,15 +99,17 @@ function Comm:BroadcastBuild()
 end
 
 function Comm:RequestBuilds()
+    if not IsInRaid() and not IsInGroup() then
+        RAT:DebugPrint("Comm: Not in group, skipping REQ broadcast")
+        return
+    end
+
     local guid = UnitGUID("player")
     if not guid then return end
 
     local talents = RAT.State.inspectedTalents and RAT.State.inspectedTalents[guid] or {}
     local trinkets = RAT.State.inspectedTrinkets and RAT.State.inspectedTrinkets[guid] or {}
-    local mysticEnchants = {}
-    if RAT.Inspection and RAT.Inspection.GetMysticEnchants then
-        mysticEnchants = RAT.Inspection:GetMysticEnchants("player")
-    end
+    local mysticEnchants = RAT.State.inspectedMysticEnchants and RAT.State.inspectedMysticEnchants[guid] or {}
 
     local buildData = {
         talents = talents,
@@ -226,10 +225,7 @@ function Comm:OnReqReceived(senderGUID, body, sender)
     if guid then
         local talents = RAT.State.inspectedTalents and RAT.State.inspectedTalents[guid] or {}
         local trinkets = RAT.State.inspectedTrinkets and RAT.State.inspectedTrinkets[guid] or {}
-        local mysticEnchants = {}
-        if RAT.Inspection and RAT.Inspection.GetMysticEnchants then
-            mysticEnchants = RAT.Inspection:GetMysticEnchants("player")
-        end
+        local mysticEnchants = RAT.State.inspectedMysticEnchants and RAT.State.inspectedMysticEnchants[guid] or {}
 
         local respData = {
             talents = talents,

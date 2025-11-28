@@ -85,10 +85,11 @@ function ExtraSpells:UpdateGroupAnchorIcons(groupType, spells)
     local growth = groupSettings.growth or "RIGHT"
 
     for i, spellInfo in ipairs(spells) do
-        local icon, border = RAT.Icons:AcquireIcon()
+        local icon = RAT.Icons:AcquireIcon()
 
         icon.spellName = spellInfo.name
         icon.spellID = spellInfo.spellData.id
+        icon.buffDuration = spellInfo.spellData.duration
         icon.guid = spellInfo.guid
         icon.groupType = groupType
 
@@ -119,19 +120,15 @@ function ExtraSpells:UpdateGroupAnchorIcons(groupType, spells)
 
         if i == 1 then
             icon:SetPoint(point, anchor, relPoint, xOff, yOff)
-            border:SetPoint(point, anchor, relPoint, xOff, yOff)
         elseif isNewRow then
             local prevRowIcon = anchor.icons[i - iconsPerRow]
             icon:SetPoint(point, prevRowIcon, relPoint, xOff, yOff)
-            border:SetPoint(point, prevRowIcon, relPoint, xOff, yOff)
         else
             local prevIcon = anchor.icons[i - 1]
             icon:SetPoint(point, prevIcon, relPoint, xOff, yOff)
-            border:SetPoint(point, prevIcon, relPoint, xOff, yOff)
         end
 
         icon:SetScale(scale)
-        border:SetScale(scale)
 
         RAT.IconHelpers:ApplyCooldownState(icon, spellInfo.guid, spellInfo.name,
             function(obj, start, dur) RAT.Icons:StartIconCooldown(obj, start, dur) end,
@@ -139,7 +136,6 @@ function ExtraSpells:UpdateGroupAnchorIcons(groupType, spells)
         )
 
         icon:Show()
-        border:Show()
 
         table.insert(anchor.icons, icon)
     end

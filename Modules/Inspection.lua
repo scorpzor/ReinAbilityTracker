@@ -43,6 +43,10 @@ end
 
 --- Inspect the player (self-inspection)
 -- Collects talents and trinkets and stores them in RAT.State, caller is still responsible for broadcasting via Comm
+function Inspection:GetLastInspectTime()
+    return lastInspectTime
+end
+
 function Inspection:InspectPlayer()
     if not UnitExists("player") then
         return
@@ -147,6 +151,8 @@ function Inspection:ProcessAscensionInspection()
     if RAT.Icons then
         RAT.Icons:RefreshAllDisplays()
     end
+
+    self.lastInspectionComplete = GetTime()
 end
 
 function Inspection:InspectPlayerTrinkets()

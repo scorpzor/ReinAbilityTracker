@@ -10,6 +10,7 @@ RAT.Data = RAT.Data or {}
 --   cd       = cooldown in seconds
 --   type     = ability type (interrupt, cc, defensive, offensive, other, etc.)
 --   spec     = talent requirement (true = requires sync/inspection)
+--   duration = (optional) buff/effect duration in seconds - shows glow for this duration
 --
 -- Spell types:
 --   interrupt - Interrupts (kick, counterspell, etc.)
@@ -87,6 +88,7 @@ RAT.Data.Spells = {
         { id = 66008, cd = 60,  type = "cc", spec = true }, -- Repentance
 
         -- Defensive
+        { id = 1100498, cd = 120, type = "defensive", duration = 12 }, -- Divine Protection
         { id = 642,   cd = 300, type = "defensive" },       -- Divine Shield
         { id = 1044,  cd = 25,  type = "defensive" },       -- Hand of Freedom
         { id = 6940,  cd = 120, type = "defensive" },       -- Hand of Sacrifice
@@ -317,6 +319,7 @@ function RAT.Data:ProcessSpellCategory(category, categoryType)
                         cd = spellData.cd,
                         type = spellData.type,
                         spec = spellData.spec,
+                        duration = spellData.duration,
                         class = className,
                         category = categoryType,
                     }

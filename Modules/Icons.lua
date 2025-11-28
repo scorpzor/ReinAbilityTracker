@@ -5,6 +5,7 @@ local RAT = _G.RAT
 RAT.Icons = {}
 
 local Icons = RAT.Icons
+local LibCustomGlow = LibStub("LibCustomGlow-1.0")
 
 --------------------------------------------------------------------------------
 -- Local State
@@ -20,7 +21,6 @@ local updateThrottle = 0     -- Throttle timer for OnUpdate (run every 0.1s inst
 --------------------------------------------------------------------------------
 
 local ICON_SIZE = 30
-local BORDER_COLOR = {0.45, 0, 1}
 
 --------------------------------------------------------------------------------
 -- Initialization
@@ -66,7 +66,7 @@ function Icons:CreateIcon()
     local icon = CreateFrame("Frame", nil, UIParent)
     icon:SetWidth(ICON_SIZE)
     icon:SetHeight(ICON_SIZE)
-    icon:SetFrameStrata("HIGH")
+    icon:SetFrameStrata("LOW")
 
     local texture = icon:CreateTexture(nil, "ARTWORK")
     texture:SetAllPoints()
@@ -77,10 +77,12 @@ function Icons:CreateIcon()
     cooldown:SetAllPoints()
     cooldown:SetReverse(false)
     cooldown:SetDrawEdge(true)
+    cooldown:SetFrameStrata("LOW")
     icon.cooldown = cooldown
 
     local textFrame = CreateFrame("Frame", nil, icon)
     textFrame:SetAllPoints()
+    textFrame:SetFrameStrata("LOW")
     textFrame:SetFrameLevel(icon:GetFrameLevel() + 2)
     local cooldownText = textFrame:CreateFontString(nil, "OVERLAY")
     cooldownText:SetFont("Fonts\\FRIZQT__.TTF", 14, "OUTLINE")
@@ -118,39 +120,24 @@ function Icons:CreateIcon()
     backdrop:SetVertexColor(0, 0, 0, 1)
     icon.backdrop = backdrop
 
-    local borderFrame = CreateFrame("Frame", nil, UIParent)
-    borderFrame:SetWidth(ICON_SIZE)
-    borderFrame:SetHeight(ICON_SIZE)
-    borderFrame:SetFrameLevel(icon:GetFrameLevel() + 1)
+    icon.buffHideTime = nil
 
-    local border = borderFrame:CreateTexture(nil, "OVERLAY")
-    border:SetAllPoints()
-    border:SetTexture("Interface\\Buttons\\WHITE8X8")
-    border:SetVertexColor(BORDER_COLOR[1], BORDER_COLOR[2], BORDER_COLOR[3])
-    border:Hide()
-    borderFrame.border = border
-
-    icon.borderFrame = borderFrame
-    icon.borderHideTime = nil
-
-    return icon, borderFrame
+    return icon, nil
 end
 
 --- Get or create an icon from the pool
 -- @return frame Icon frame
--- @return frame Border frame
 function Icons:AcquireIcon()
-    local icon, border
+    local icon
 
     if #iconPool > 0 then
         icon = table.remove(iconPool)
-        border = table.remove(borderPool)
     else
-        icon, border = self:CreateIcon()
+        icon = self:CreateIcon()
     end
 
     icon:Show()
-    return icon, border
+    return icon
 end
 
 --- Return an icon to the pool
@@ -158,27 +145,26 @@ end
 function Icons:ReleaseIcon(icon)
     if not icon then return end
 
+    if LibCustomGlow then
+        LibCustomGlow.PixelGlow_Stop(icon)
+    end
+
     icon:Hide()
     icon:ClearAllPoints()
     icon.spellName = nil
     icon.spellID = nil
+    icon.buffDuration = nil
     icon.guid = nil
     icon.active = nil
     icon.startTime = nil
     icon.duration = nil
-    icon.borderHideTime = nil
+    icon.buffHideTime = nil
     icon.anchorIndex = nil
     icon.groupType = nil
 
     if icon.unitNameText then
         icon.unitNameText:SetText("")
         icon.unitNameText:Hide()
-    end
-
-    if icon.borderFrame then
-        icon.borderFrame:Hide()
-        icon.borderFrame:ClearAllPoints()
-        table.insert(borderPool, icon.borderFrame)
     end
 
     table.insert(iconPool, icon)
@@ -279,11 +265,12 @@ function Icons:StartIconCooldown(icon, startTime, duration)
 
     icon.cooldown:SetCooldown(startTime, duration)
 
-    icon.texture:SetDesaturated(true)
-
-    if icon.borderFrame and icon.borderFrame.border then
-        icon.borderFrame.border:Show()
-        icon.borderHideTime = GetTime() + 0.8
+    if LibCustomGlow and icon.buffDuration and icon.buffDuration > 0 then
+        LibCustomGlow.PixelGlow_Start(icon, {1, 1, 1, 1}, 8, 0.25, nil, 2)
+        icon.buffHideTime = GetTime() + icon.buffDuration
+    else
+        icon.texture:SetDesaturated(true)
+        icon.buffHideTime = nil
     end
 end
 
@@ -302,10 +289,10 @@ function Icons:SetIconReady(icon)
 
     icon.texture:SetDesaturated(false)
 
-    if icon.borderFrame and icon.borderFrame.border then
-        icon.borderFrame.border:Hide()
+    if LibCustomGlow then
+        LibCustomGlow.PixelGlow_Stop(icon)
     end
-    icon.borderHideTime = nil
+    icon.buffHideTime = nil
 end
 
 --- Stop all active cooldowns
@@ -375,11 +362,12 @@ end
 -- @param icon frame Icon frame
 -- @param now number Current time
 function Icons:UpdateIconState(icon, now)
-    if icon.borderHideTime and now >= icon.borderHideTime then
-        if icon.borderFrame and icon.borderFrame.border:IsShown() then
-            icon.borderFrame.border:Hide()
+    if icon.buffHideTime and now >= icon.buffHideTime then
+        if LibCustomGlow then
+            LibCustomGlow.PixelGlow_Stop(icon)
         end
-        icon.borderHideTime = nil
+        icon.texture:SetDesaturated(true)
+        icon.buffHideTime = nil
     end
 
     if icon.active and icon.startTime and icon.duration and icon.cooldownText then

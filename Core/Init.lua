@@ -41,11 +41,6 @@ function RAT:OnEnable()
     self:RegisterEvent("PARTY_MEMBERS_CHANGED", "OnPartyChanged")
     self:RegisterEvent("PLAYER_ENTERING_WORLD", "OnPlayerEnteringWorld")
     self:RegisterEvent("PLAYER_LEAVING_WORLD", "OnPlayerLeavingWorld")
-    self:RegisterEvent("PLAYER_TALENT_UPDATE", "OnTalentUpdate")
-    self:RegisterEvent("ACTIVE_TALENT_GROUP_CHANGED", "OnTalentUpdate")
-    self:RegisterEvent("ASCENSION_CA_SPECIALIZATION_ACTIVE_ID_CHANGED", "OnTalentUpdate")
-    self:RegisterEvent("CHARACTER_ADVANCEMENT_PENDING_BUILD_UPDATED", "OnTalentUpdate")
-    self:RegisterEvent("MYSTIC_ENCHANT_PRESET_SET_ACTIVE_RESULT", "OnTalentUpdate")
     self:RegisterEvent("UNIT_SPELLCAST_SUCCEEDED", "OnSpellCastSucceeded")
     self:RegisterEvent("UNIT_INVENTORY_CHANGED", "OnInventoryChanged")
 
@@ -81,6 +76,10 @@ function RAT:OnEnable()
         self.Inspection:InspectPlayer()
     end
 
+    self:ScheduleTimer("register_talent_events", 0.5, function()
+        RAT:RegisterTalentEvents()
+    end)
+
     self:OnPartyChanged()
 
     self:Print(string.format(L["ADDON_LOADED"], self.Version))
@@ -100,6 +99,19 @@ function RAT:OnDisable()
     wipe(self.State.syncedPartyMembers)
 
     self:CancelPendingTimers()
+end
+
+--------------------------------------------------------------------------------
+-- Helper Functions
+--------------------------------------------------------------------------------
+
+function RAT:RegisterTalentEvents()
+    self:RegisterEvent("PLAYER_TALENT_UPDATE", "OnTalentUpdate")
+    self:RegisterEvent("ACTIVE_TALENT_GROUP_CHANGED", "OnTalentUpdate")
+    self:RegisterEvent("ASCENSION_CA_SPECIALIZATION_ACTIVE_ID_CHANGED", "OnTalentUpdate")
+    self:RegisterEvent("CHARACTER_ADVANCEMENT_PENDING_BUILD_UPDATED", "OnTalentUpdate")
+    self:RegisterEvent("MYSTIC_ENCHANT_PRESET_SET_ACTIVE_RESULT", "OnTalentUpdate")
+    self:DebugPrint("Talent events registered")
 end
 
 --------------------------------------------------------------------------------
@@ -248,23 +260,54 @@ function RAT:OnPlayerLeavingWorld()
     end
 end
 
-function RAT:OnTalentUpdate()
+function RAT:OnTalentUpdate(event)
     if not self.State.isInitialized then return end
 
-    self:DebugPrint("Talent update detected, re-inspecting and broadcasting")
+    self:DebugPrint(string.format("OnTalentUpdate triggered by: %s", event or "unknown"))
 
     if self.Inspection then
-        self.Inspection:InspectPlayer()
-    end
+        local now = GetTime()
 
-    if self.timers and self.timers["talent_update_broadcast"] then
-        self:CancelTimer(self.timers["talent_update_broadcast"])
-    end
-
-    self:ScheduleTimer("talent_update_broadcast", 0.2, function()
-        if self.Comm then
-            self.Comm:BroadcastBuild()
+        if self.Inspection.lastInspectionComplete then
+            local timeSinceComplete = now - self.Inspection.lastInspectionComplete
+            if timeSinceComplete < 1.0 then
+                self:DebugPrint(string.format("Ignoring %s event %.1fs after inspection completion (cascading event)", event or "talent", timeSinceComplete))
+                return
+            end
         end
+
+        if self.Inspection.GetLastInspectTime then
+            local lastStart = self.Inspection:GetLastInspectTime()
+            if lastStart and lastStart > 0 then
+                local timeSinceStart = now - lastStart
+                if timeSinceStart < 0.5 then
+                    self:DebugPrint(string.format("Ignoring %s event %.1fs after inspection start (in progress)", event or "talent", timeSinceStart))
+                    return
+                end
+            end
+        end
+    end
+
+    if self.timers and self.timers["talent_update_debounce"] then
+        self:CancelTimer(self.timers["talent_update_debounce"])
+    end
+
+    self:ScheduleTimer("talent_update_debounce", 0.3, function()
+        self:DebugPrint(string.format("Talent update detected (%s), re-inspecting and broadcasting", event or "unknown"))
+
+        if self.Inspection then
+            self.Inspection:InspectPlayer()
+        end
+
+        if self.timers and self.timers["talent_update_broadcast"] then
+            self:CancelTimer(self.timers["talent_update_broadcast"])
+        end
+
+        self:ScheduleTimer("talent_update_broadcast", 0.2, function()
+            if self.Comm then
+                self.Comm:BroadcastBuild()
+            end
+        end)
     end)
 end
 
