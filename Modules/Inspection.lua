@@ -49,7 +49,7 @@ function Inspection:InspectPlayer()
     end
 
     local now = GetTime()
-    if (now - lastInspectTime) < 5 then
+    if (now - lastInspectTime) < 2 then
         RAT:DebugPrint(string.format("Player inspection throttled (last inspected %.1fs ago)", now - lastInspectTime))
         return
     end
@@ -301,8 +301,8 @@ function Inspection:GUIDHasTalent(guid, spellName)
     return false
 end
 
---- Get mystic enchants from active preset for given unit
 -- @param unit string Unit token
+--- Get mystic enchants currently applied to the given unit
 -- @return table Array of mystic enchant data: {{spellID, spellName, cooldown, type, enchantID}, ...}
 function Inspection:GetMysticEnchants(unit)
     local mysticEnchants = {}
@@ -317,62 +317,48 @@ function Inspection:GetMysticEnchants(unit)
         return mysticEnchants
     end
 
-    local numPresets = C_MysticEnchantPreset.GetNumPresets()
-    if not numPresets or numPresets == 0 then
-        RAT:DebugPrint("GetMysticEnchants: No presets found")
+    if not MysticEnchantUtil or not MysticEnchantUtil.GetAppliedEnchants then
+        RAT:DebugPrint("GetMysticEnchants: MysticEnchantUtil not available")
         return mysticEnchants
     end
 
-    local activePresetIndex = nil
-    for i = 1, numPresets do
-        local presetData, isActive = C_MysticEnchantPreset.GetPresetData(i)
-        if isActive then
-            activePresetIndex = i
-            break
-        end
-    end
-
-    if not activePresetIndex then
-        RAT:DebugPrint("GetMysticEnchants: No active preset")
-        return mysticEnchants
-    end
-
-    local presetData, isActive = C_MysticEnchantPreset.GetPresetData(activePresetIndex)
-    if not presetData then
-        RAT:DebugPrint("GetMysticEnchants: Failed to get preset data")
+    local appliedEnchants = MysticEnchantUtil.GetAppliedEnchants("player")
+    if not appliedEnchants or type(appliedEnchants) ~= "table" then
+        RAT:DebugPrint("GetMysticEnchants: No applied enchants found")
         return mysticEnchants
     end
 
     local allMappings = RAT.Data.MysticEnchantMapping or {}
     local classMappings = allMappings[playerClass] or {}
+
     local foundCount = 0
+    local totalCount = 0
 
-    for slotIndex, enchantID in pairs(presetData) do
-        if enchantID ~= 0 then
-            local mappingData = classMappings[enchantID]
+    for enchantID, _ in pairs(appliedEnchants) do
+        totalCount = totalCount + 1
+        local mappingData = classMappings[enchantID]
 
-            if mappingData then
-                local spellID, cooldown, spellType = unpack(mappingData)
+        if mappingData then
+            local spellID, cooldown, spellType = unpack(mappingData)
 
-                local spellName = GetSpellInfo(spellID)
-                if spellName then
-                    table.insert(mysticEnchants, {spellID, spellName, cooldown, spellType, enchantID})
-                    foundCount = foundCount + 1
-                    RAT:DebugPrint(string.format("  Found enchant: %s (enchantID=%d, spellID=%d, cd=%ds, type=%s)",
-                        spellName, enchantID, spellID, cooldown, spellType))
-                else
-                    RAT:DebugPrint(string.format("  Warning: Spell ID %d not found for enchant ID %d",
-                        spellID, enchantID))
-                end
+            local spellName = GetSpellInfo(spellID)
+            if spellName then
+                table.insert(mysticEnchants, {spellID, spellName, cooldown, spellType, enchantID})
+                foundCount = foundCount + 1
+                RAT:DebugPrint(string.format("  Found enchant: %s (enchantID=%d, spellID=%d, cd=%ds, type=%s)",
+                    spellName, enchantID, spellID, cooldown, spellType))
             else
-                RAT:DebugPrint(string.format("  Unknown %s enchant ID %d in slot %d (add to MysticEnchantMapping[\"%s\"])",
-                    playerClass, enchantID, slotIndex, playerClass))
+                RAT:DebugPrint(string.format("  Warning: Spell ID %d not found for enchant ID %d",
+                    spellID, enchantID))
             end
+        else
+            RAT:DebugPrint(string.format("  Unknown %s enchant ID %d (add to MysticEnchantMapping[\"%s\"])",
+                playerClass, enchantID, playerClass))
         end
     end
 
     RAT:DebugPrint(string.format("GetMysticEnchants: Found %d/%d %s enchants with cooldowns",
-        foundCount, #presetData, playerClass))
+        foundCount, totalCount, playerClass))
 
     return mysticEnchants
 end

@@ -109,8 +109,8 @@ RAT.Data.Spells = {
         --{ id = 47585, cd = 75,  type = "defensive", spec = true },          -- Dispersion
         { id = 1106346, cd = 180, type = "defensive" },                     -- Fear Ward
         { id = 1100586, cd = 30,  type = "defensive" },                     -- Fade
-        { id = 1164901,  cd = 360, type = "defensive", spec = true },       -- Hymn of Hope
-        { id = 1164843,  cd = 480, type = "defensive", spec = true },       -- Divine Hymn
+        { id = 1164901,  cd = 360, type = "defensive"},                     -- Hymn of Hope
+        { id = 1164843,  cd = 480, type = "defensive"},                     -- Divine Hymn
 
         -- Offensive
         { id = 1134433, cd = 300, type = "offensive" },                     -- Shadowfiend

@@ -302,26 +302,20 @@ function Comm:DeserializeAndStore(senderGUID, body, sender)
     RAT:DebugPrint(string.format("Comm: Storing build from %s (GUID: %s) - talents=%d, trinkets=%d, mystics=%d",
         sender, senderGUID:sub(1, 12), talentCount, #trinkets, #mysticEnchants))
 
-    if talentCount > 0 then
-        if not RAT.State.inspectedTalents then
-            RAT.State.inspectedTalents = {}
-        end
-        RAT.State.inspectedTalents[senderGUID] = talents
+    if not RAT.State.inspectedTalents then
+        RAT.State.inspectedTalents = {}
     end
+    RAT.State.inspectedTalents[senderGUID] = talents
 
-    if #trinkets > 0 then
-        if not RAT.State.inspectedTrinkets then
-            RAT.State.inspectedTrinkets = {}
-        end
-        RAT.State.inspectedTrinkets[senderGUID] = trinkets
+    if not RAT.State.inspectedTrinkets then
+        RAT.State.inspectedTrinkets = {}
     end
+    RAT.State.inspectedTrinkets[senderGUID] = trinkets
 
-    if #mysticEnchants > 0 then
-        if not RAT.State.inspectedMysticEnchants then
-            RAT.State.inspectedMysticEnchants = {}
-        end
-        RAT.State.inspectedMysticEnchants[senderGUID] = mysticEnchants
+    if not RAT.State.inspectedMysticEnchants then
+        RAT.State.inspectedMysticEnchants = {}
     end
+    RAT.State.inspectedMysticEnchants[senderGUID] = mysticEnchants
 
     if RAT.Spells and RAT.Units then
         local trackedUnits = RAT.Units:GetAllUnits()

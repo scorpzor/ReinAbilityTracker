@@ -170,6 +170,11 @@ function Icons:ReleaseIcon(icon)
     icon.anchorIndex = nil
     icon.groupType = nil
 
+    if icon.unitNameText then
+        icon.unitNameText:SetText("")
+        icon.unitNameText:Hide()
+    end
+
     if icon.borderFrame then
         icon.borderFrame:Hide()
         icon.borderFrame:ClearAllPoints()

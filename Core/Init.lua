@@ -42,6 +42,10 @@ function RAT:OnEnable()
     self:RegisterEvent("PLAYER_ENTERING_WORLD", "OnPlayerEnteringWorld")
     self:RegisterEvent("PLAYER_LEAVING_WORLD", "OnPlayerLeavingWorld")
     self:RegisterEvent("PLAYER_TALENT_UPDATE", "OnTalentUpdate")
+    self:RegisterEvent("ACTIVE_TALENT_GROUP_CHANGED", "OnTalentUpdate")
+    self:RegisterEvent("ASCENSION_CA_SPECIALIZATION_ACTIVE_ID_CHANGED", "OnTalentUpdate")
+    self:RegisterEvent("CHARACTER_ADVANCEMENT_PENDING_BUILD_UPDATED", "OnTalentUpdate")
+    self:RegisterEvent("MYSTIC_ENCHANT_PRESET_SET_ACTIVE_RESULT", "OnTalentUpdate")
     self:RegisterEvent("UNIT_SPELLCAST_SUCCEEDED", "OnSpellCastSucceeded")
     self:RegisterEvent("UNIT_INVENTORY_CHANGED", "OnInventoryChanged")
 
@@ -253,7 +257,11 @@ function RAT:OnTalentUpdate()
         self.Inspection:InspectPlayer()
     end
 
-    self:ScheduleTimer("talent_update_broadcast", 0.5, function()
+    if self.timers and self.timers["talent_update_broadcast"] then
+        self:CancelTimer(self.timers["talent_update_broadcast"])
+    end
+
+    self:ScheduleTimer("talent_update_broadcast", 0.2, function()
         if self.Comm then
             self.Comm:BroadcastBuild()
         end
@@ -289,6 +297,10 @@ function RAT:OnInventoryChanged(event, unit)
 
             if self.Inspection then
                 self.Inspection:InspectPlayer()
+            end
+
+            if self.timers and self.timers["equipment_change_broadcast"] then
+                self:CancelTimer(self.timers["equipment_change_broadcast"])
             end
 
             self:ScheduleTimer("equipment_change_broadcast", 0.3, function()
