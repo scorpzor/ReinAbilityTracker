@@ -713,7 +713,42 @@ local function GetOptions()
                 type = "group",
                 inline = true,
                 order = order,
-                args = {},
+                args = {
+                    selectAll = {
+                        name = "Select All",
+                        type = "execute",
+                        order = 1,
+                        func = function()
+                            local group = RAT.db.profile.spellFilterSelectedGroup or "party"
+                            if not RAT.db.profile.spellGroupFilters[group] then
+                                RAT.db.profile.spellGroupFilters[group] = {}
+                            end
+                            for _, spellName in ipairs(spells) do
+                                RAT.db.profile.spellGroupFilters[group][spellName] = true
+                            end
+                            if RAT.Icons then
+                                RAT.Icons:RefreshAllDisplays()
+                            end
+                        end,
+                    },
+                    deselectAll = {
+                        name = "Deselect All",
+                        type = "execute",
+                        order = 2,
+                        func = function()
+                            local group = RAT.db.profile.spellFilterSelectedGroup or "party"
+                            if not RAT.db.profile.spellGroupFilters[group] then
+                                RAT.db.profile.spellGroupFilters[group] = {}
+                            end
+                            for _, spellName in ipairs(spells) do
+                                RAT.db.profile.spellGroupFilters[group][spellName] = false
+                            end
+                            if RAT.Icons then
+                                RAT.Icons:RefreshAllDisplays()
+                            end
+                        end,
+                    },
+                },
                 get = function(info)
                     local spellName = info[#info]
                     local group = RAT.db.profile.spellFilterSelectedGroup or "party"
@@ -745,7 +780,7 @@ local function GetOptions()
                 options.args.spellFilters.args.spellList.args["class_" .. className].args[spellName] = {
                     name = spellName,
                     type = "toggle",
-                    order = i,
+                    order = i + 10,
                 }
             end
 
@@ -773,7 +808,42 @@ local function GetOptions()
             type = "group",
             inline = true,
             order = order,
-            args = {},
+            args = {
+                selectAll = {
+                    name = "Select All",
+                    type = "execute",
+                    order = 1,
+                    func = function()
+                        local group = RAT.db.profile.spellFilterSelectedGroup or "party"
+                        if not RAT.db.profile.spellGroupFilters[group] then
+                            RAT.db.profile.spellGroupFilters[group] = {}
+                        end
+                        for _, spellName in ipairs(allRacialSpells) do
+                            RAT.db.profile.spellGroupFilters[group][spellName] = true
+                        end
+                        if RAT.Icons then
+                            RAT.Icons:RefreshAllDisplays()
+                        end
+                    end,
+                },
+                deselectAll = {
+                    name = "Deselect All",
+                    type = "execute",
+                    order = 2,
+                    func = function()
+                        local group = RAT.db.profile.spellFilterSelectedGroup or "party"
+                        if not RAT.db.profile.spellGroupFilters[group] then
+                            RAT.db.profile.spellGroupFilters[group] = {}
+                        end
+                        for _, spellName in ipairs(allRacialSpells) do
+                            RAT.db.profile.spellGroupFilters[group][spellName] = false
+                        end
+                        if RAT.Icons then
+                            RAT.Icons:RefreshAllDisplays()
+                        end
+                    end,
+                },
+            },
             get = function(info)
                 local spellName = info[#info]
                 local group = RAT.db.profile.spellFilterSelectedGroup or "party"
@@ -805,7 +875,7 @@ local function GetOptions()
             options.args.spellFilters.args.spellList.args["racials"].args[spellName] = {
                 name = spellName,
                 type = "toggle",
-                order = i,
+                order = i + 10,
             }
         end
 
@@ -818,7 +888,42 @@ local function GetOptions()
             type = "group",
             inline = true,
             order = order,
-            args = {},
+            args = {
+                selectAll = {
+                    name = "Select All",
+                    type = "execute",
+                    order = 1,
+                    func = function()
+                        local group = RAT.db.profile.spellFilterSelectedGroup or "party"
+                        if not RAT.db.profile.spellGroupFilters[group] then
+                            RAT.db.profile.spellGroupFilters[group] = {}
+                        end
+                        for _, spellName in ipairs(spellData.trinkets) do
+                            RAT.db.profile.spellGroupFilters[group][spellName] = true
+                        end
+                        if RAT.Icons then
+                            RAT.Icons:RefreshAllDisplays()
+                        end
+                    end,
+                },
+                deselectAll = {
+                    name = "Deselect All",
+                    type = "execute",
+                    order = 2,
+                    func = function()
+                        local group = RAT.db.profile.spellFilterSelectedGroup or "party"
+                        if not RAT.db.profile.spellGroupFilters[group] then
+                            RAT.db.profile.spellGroupFilters[group] = {}
+                        end
+                        for _, spellName in ipairs(spellData.trinkets) do
+                            RAT.db.profile.spellGroupFilters[group][spellName] = false
+                        end
+                        if RAT.Icons then
+                            RAT.Icons:RefreshAllDisplays()
+                        end
+                    end,
+                },
+            },
             get = function(info)
                 local spellName = info[#info]
                 local group = RAT.db.profile.spellFilterSelectedGroup or "party"
@@ -850,7 +955,7 @@ local function GetOptions()
             options.args.spellFilters.args.spellList.args["trinkets"].args[spellName] = {
                 name = spellName,
                 type = "toggle",
-                order = i,
+                order = i + 10,
             }
         end
 
@@ -872,7 +977,42 @@ local function GetOptions()
                     type = "group",
                     inline = true,
                     order = order,
-                    args = {},
+                    args = {
+                        selectAll = {
+                            name = "Select All",
+                            type = "execute",
+                            order = 1,
+                            func = function()
+                                local group = RAT.db.profile.spellFilterSelectedGroup or "party"
+                                if not RAT.db.profile.spellGroupFilters[group] then
+                                    RAT.db.profile.spellGroupFilters[group] = {}
+                                end
+                                for _, spellName in ipairs(enchants) do
+                                    RAT.db.profile.spellGroupFilters[group][spellName] = true
+                                end
+                                if RAT.Icons then
+                                    RAT.Icons:RefreshAllDisplays()
+                                end
+                            end,
+                        },
+                        deselectAll = {
+                            name = "Deselect All",
+                            type = "execute",
+                            order = 2,
+                            func = function()
+                                local group = RAT.db.profile.spellFilterSelectedGroup or "party"
+                                if not RAT.db.profile.spellGroupFilters[group] then
+                                    RAT.db.profile.spellGroupFilters[group] = {}
+                                end
+                                for _, spellName in ipairs(enchants) do
+                                    RAT.db.profile.spellGroupFilters[group][spellName] = false
+                                end
+                                if RAT.Icons then
+                                    RAT.Icons:RefreshAllDisplays()
+                                end
+                            end,
+                        },
+                    },
                     get = function(info)
                         local spellName = info[#info]
                         local group = RAT.db.profile.spellFilterSelectedGroup or "party"
@@ -904,7 +1044,7 @@ local function GetOptions()
                     options.args.spellFilters.args.spellList.args["mystic_" .. className].args[spellName] = {
                         name = spellName,
                         type = "toggle",
-                        order = i,
+                        order = i + 10,
                     }
                 end
 
